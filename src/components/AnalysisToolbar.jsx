@@ -17,7 +17,9 @@ export function AnalysisToolbar({
   onOpenServiceLevelModal,
   onOpenAnalysisParametersModal,
   runLoading,
-  saveLoading
+  saveLoading,
+  demoDatasets = [],
+  onSelectDataset
 }) {
   if (loading) {
     return <div className="skeleton toolbar-skeleton" data-testid="toolbar-skeleton" />
@@ -40,6 +42,21 @@ export function AnalysisToolbar({
         <h1>Анализ {analysisId}</h1>
         <p>{data?.name ?? 'Нет данных для этого анализа'}</p>
       </div>
+
+        {demoDatasets.length ? (
+          <label className="field-label">
+            Демо-набор
+            <select value={analysisId} onChange={(event) => onSelectDataset?.(event.target.value)}>
+              {demoDatasets.map((dataset) => (
+                <option key={dataset.id} value={dataset.id}>
+                  {dataset.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
+        <p className="dataset-meta">Строк в демо-наборе: {data?.results?.length ?? 0}</p>
 
       <div className="toolbar-controls">
         <label className="field-label">

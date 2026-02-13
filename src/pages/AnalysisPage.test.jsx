@@ -51,6 +51,19 @@ describe('AnalysisPage smoke', () => {
     expect(screen.getByRole('heading', { name: 'Результаты ABC-XYZ' })).toBeInTheDocument()
   })
 
+
+  it('allows switching demo dataset to large-tree (12000 rows)', async () => {
+    renderPage('abc-xyz')
+
+    fireEvent.change(screen.getByLabelText('Демо-набор'), { target: { value: 'large-tree' } })
+
+    await waitFor(() => {
+      expect(screen.getByText('Анализ large-tree')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('Строк в демо-наборе: 12000')).toBeInTheDocument()
+  })
+
   it('opens and closes analysis parameters modal', () => {
     renderPage()
 
@@ -241,6 +254,26 @@ describe('AnalysisPage smoke', () => {
 
     expect(screen.getAllByText('Границы должны быть по убыванию: A ≥ B ≥ C')).toHaveLength(3)
     expect(screen.getByRole('button', { name: 'Применить' })).toBeDisabled()
+  })
+
+
+  it('runs local demo analysis and updates rows by filters', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
+    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
+    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Молочная продукция' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
+
+    await waitFor(() => {
+      expect(screen.getByText('Анализ выполнен на демо-данных: 3 строк.')).toBeInTheDocument()
+    })
+
+    expect(screen.getByText('SKU-001')).toBeInTheDocument()
+    expect(screen.queryByText('SKU-003')).not.toBeInTheDocument()
   })
 
   it('shows api error messages with readable text', async () => {

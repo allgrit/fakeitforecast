@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { AnalysisToolbar } from '../components/AnalysisToolbar'
 import { AnalysisWorkspace } from '../components/AnalysisWorkspace'
 import { ClassificationSidebar } from '../components/ClassificationSidebar'
 import { mockAnalysisData } from '../data/mockAnalysisData'
+import { analysisDatasetRegistry } from '../data/datasets'
 import { SERVICE_LEVEL_COMBINATIONS } from '../utils/analysisValidation'
 import { ServiceLevelModal } from '../components/ServiceLevelModal'
 import { AnalysisParametersModal } from '../components/AnalysisParametersModal'
+import { buildMockAnalysisResult } from '../utils/mockAnalysisEngine'
 
 const FEATURE_USE_MOCKS = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false'
 const FEATURE_LOADING = import.meta.env.VITE_SHOW_ANALYSIS_LOADING === 'true'
@@ -94,6 +96,7 @@ function trackTelemetry(eventName, payload) {
 
 export function AnalysisPage() {
   const { analysisId } = useParams()
+  const navigate = useNavigate()
   const [filters, setFilters] = useState(initialFilters)
   const [runLoading, setRunLoading] = useState(false)
   const [applyLoading, setApplyLoading] = useState(false)
@@ -109,6 +112,7 @@ export function AnalysisPage() {
   const [draftSelectedScopeIds, setDraftSelectedScopeIds] = useState([])
   const [draftServiceLevels, setDraftServiceLevels] = useState(initialServiceLevels)
   const [draftFilters, setDraftFilters] = useState(initialFilters)
+  const [analysisResult, setAnalysisResult] = useState(null)
 
   const analysisData = useMemo(() => {
     if (!FEATURE_USE_MOCKS || !analysisId) {
@@ -117,6 +121,16 @@ export function AnalysisPage() {
 
     return mockAnalysisData[analysisId] || null
   }, [analysisId])
+
+  const effectiveData = analysisResult ?? analysisData
+
+  useEffect(() => {
+    if (!FEATURE_USE_MOCKS) {
+      return
+    }
+
+    setAnalysisResult(analysisData)
+  }, [analysisData])
 
   const updateFilters = (patch) => {
     setFilters((prev) => ({ ...prev, ...patch }))
@@ -204,6 +218,20 @@ export function AnalysisPage() {
       }
     }
 
+    if (FEATURE_USE_MOCKS) {
+      try {
+        await postJson('/analysis/run', payload)
+      } catch {
+        // В mock-режиме сетевой запрос не блокирует локальный пересчет.
+      }
+
+      const mockResult = buildMockAnalysisResult(analysisData, filters)
+      setAnalysisResult(mockResult)
+      trackTelemetry('analysis_run_started', { analysisId, groupMode, source: 'mock' })
+      showSuccess(`Анализ выполнен на демо-данных: ${mockResult?.results?.length ?? 0} строк.`)
+      return
+    }
+
     setRunLoading(true)
     setFeedback(null)
     try {
@@ -246,6 +274,7 @@ export function AnalysisPage() {
     setSelectedScopeIds([])
     setServiceLevels(initialServiceLevels)
     setFeedback(null)
+    setAnalysisResult(analysisData)
     setResetKey((prev) => prev + 1)
   }
 
@@ -271,6 +300,15 @@ export function AnalysisPage() {
     setAnalysisParametersModalOpen(false)
   }
 
+
+  const handleSelectDataset = (datasetId) => {
+    if (!datasetId || datasetId === analysisId) {
+      return
+    }
+
+    navigate(`/analysis/${datasetId}`)
+  }
+
   return (
     <div className="analysis-page" data-testid="analysis-page">
       {feedback ? <div className={`api-feedback ${feedback.type}`}>{feedback.message}</div> : null}
@@ -278,7 +316,7 @@ export function AnalysisPage() {
         key={`toolbar-${resetKey}`}
         analysisId={analysisId}
         loading={FEATURE_LOADING}
-        data={analysisData}
+        data={effectiveData}
         filters={filters}
         onChange={updateFilters}
         onRunAnalysis={runAnalysis}
@@ -288,12 +326,14 @@ export function AnalysisPage() {
         onOpenAnalysisParametersModal={openAnalysisParametersModal}
         runLoading={runLoading}
         saveLoading={saveLoading}
+        demoDatasets={FEATURE_USE_MOCKS ? analysisDatasetRegistry : []}
+        onSelectDataset={handleSelectDataset}
       />
       <div className="analysis-body">
         <ClassificationSidebar
           key={`sidebar-${resetKey}`}
           loading={FEATURE_LOADING}
-          data={analysisData}
+          data={effectiveData}
           filters={filters}
           onChange={updateFilters}
         />
@@ -330,7 +370,7 @@ export function AnalysisPage() {
           <AnalysisWorkspace
             key={`workspace-${resetKey}`}
             loading={FEATURE_LOADING}
-            data={analysisData}
+            data={effectiveData}
             thresholds={filters.thresholds}
             viewType={filters.viewType}
             onViewChange={(viewType) => {
