@@ -7,5 +7,5 @@ export function getRouterBasename(baseUrl) {
 }
 
 export function shouldUseHashRouter(baseUrl) {
-  return baseUrl === '.' || baseUrl === './'
+  return Boolean(baseUrl && baseUrl !== '/')
 }

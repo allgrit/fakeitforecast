@@ -29,8 +29,8 @@ describe('shouldUseHashRouter', () => {
     expect(shouldUseHashRouter('./')).toBe(true)
   })
 
-  it('returns false for nested deployments served from a subdirectory', () => {
-    expect(shouldUseHashRouter('/fakeitforecast/')).toBe(false)
-    expect(shouldUseHashRouter('/fakeitforecast')).toBe(false)
+  it('returns true for nested deployments served from a subdirectory', () => {
+    expect(shouldUseHashRouter('/fakeitforecast/')).toBe(true)
+    expect(shouldUseHashRouter('/fakeitforecast')).toBe(true)
   })
 })
