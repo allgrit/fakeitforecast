@@ -1,0 +1,72 @@
+:root {
+  font-family: Inter, system-ui, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fb;
+}
+
+.analysis-page {
+  padding: 16px;
+}
+
+.analysis-body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+}
+
+.analysis-toolbar,
+.classification-sidebar,
+.analysis-workspace {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(7, 29, 63, 0.08);
+}
+
+.analysis-toolbar {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+button {
+  background: #2554cc;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, #e8edf7 25%, #f1f5fd 37%, #e8edf7 63%);
+  background-size: 400% 100%;
+  animation: pulse 1.4s ease infinite;
+}
+
+.toolbar-skeleton {
+  height: 92px;
+  margin-bottom: 16px;
+}
+
+.sidebar-skeleton,
+.workspace-skeleton {
+  min-height: 280px;
+}
+
+.empty-state {
+  color: #5d6b84;
+}
+
+@keyframes pulse {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
