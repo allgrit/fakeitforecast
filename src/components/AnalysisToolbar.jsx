@@ -1,6 +1,15 @@
+import { validateThresholds } from '../utils/analysisValidation'
+
 const GROUP_ANALYSIS_MODES = [
   { id: 'by-subgroups', label: 'по подгруппам' },
   { id: 'selected-subgroups', label: 'по выбранным подгруппам' }
+]
+
+const AXIS_PARAMETER_OPTIONS = [
+  { id: 'turnover', label: 'Оборот' },
+  { id: 'profit', label: 'Маржа' },
+  { id: 'sales-frequency', label: 'Частота продаж' },
+  { id: 'demand-variation', label: 'Вариативность спроса' }
 ]
 
 export function AnalysisToolbar({ analysisId, loading, data, filters, onChange, onRunAnalysis, runLoading }) {
@@ -8,7 +17,9 @@ export function AnalysisToolbar({ analysisId, loading, data, filters, onChange, 
     return <div className="skeleton toolbar-skeleton" data-testid="toolbar-skeleton" />
   }
 
-  const isInvalid = !filters.warehouseId || !filters.periodFrom || !filters.periodTo || !filters.selectedNodeId
+  const thresholdValidation = validateThresholds(filters.thresholds)
+  const isInvalid =
+    !filters.warehouseId || !filters.periodFrom || !filters.periodTo || !filters.selectedNodeId || !thresholdValidation.isValid
 
   return (
     <header className="analysis-toolbar">
@@ -62,6 +73,111 @@ export function AnalysisToolbar({ analysisId, loading, data, filters, onChange, 
             <option value="chart">График</option>
             <option value="map">Карта</option>
           </select>
+        </label>
+
+        <label className="field-label">
+          Параметр X
+          <select value={filters.axes.x} onChange={(event) => onChange({ axes: { ...filters.axes, x: event.target.value } })}>
+            {AXIS_PARAMETER_OPTIONS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field-label">
+          Параметр Y
+          <select value={filters.axes.y} onChange={(event) => onChange({ axes: { ...filters.axes, y: event.target.value } })}>
+            {AXIS_PARAMETER_OPTIONS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field-label">
+          Параметр Z
+          <select value={filters.axes.z} onChange={(event) => onChange({ axes: { ...filters.axes, z: event.target.value } })}>
+            {AXIS_PARAMETER_OPTIONS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="field-label">
+          Граница A
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={filters.thresholds.a}
+            onChange={(event) => onChange({ thresholds: { ...filters.thresholds, a: event.target.value } })}
+          />
+          {thresholdValidation.fieldErrors.a && <span className="field-error">{thresholdValidation.fieldErrors.a}</span>}
+        </label>
+
+        <label className="field-label">
+          Граница B
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={filters.thresholds.b}
+            onChange={(event) => onChange({ thresholds: { ...filters.thresholds, b: event.target.value } })}
+          />
+          {thresholdValidation.fieldErrors.b && <span className="field-error">{thresholdValidation.fieldErrors.b}</span>}
+        </label>
+
+        <label className="field-label">
+          Граница C
+          <input
+            type="number"
+            min="0"
+            max="100"
+            value={filters.thresholds.c}
+            onChange={(event) => onChange({ thresholds: { ...filters.thresholds, c: event.target.value } })}
+          />
+          {thresholdValidation.fieldErrors.c && <span className="field-error">{thresholdValidation.fieldErrors.c}</span>}
+        </label>
+
+        <label className="field-label inline-label">
+          <input
+            type="checkbox"
+            checked={filters.flags.excludeNewItems}
+            onChange={(event) => onChange({ flags: { ...filters.flags, excludeNewItems: event.target.checked } })}
+          />
+          не анализировать новые товары
+        </label>
+
+        <label className="field-label inline-label">
+          <input
+            type="checkbox"
+            checked={filters.flags.clearSalesHistoryFromPromotions}
+            onChange={(event) => onChange({ flags: { ...filters.flags, clearSalesHistoryFromPromotions: event.target.checked } })}
+          />
+          очищать историю продаж от акций
+        </label>
+
+        <label className="field-label inline-label">
+          <input
+            type="checkbox"
+            checked={filters.flags.aggregateByWarehouses}
+            onChange={(event) => onChange({ flags: { ...filters.flags, aggregateByWarehouses: event.target.checked } })}
+          />
+          суммарно по складам
+        </label>
+
+        <label className="field-label inline-label">
+          <input
+            type="checkbox"
+            checked={filters.flags.includeDeficit}
+            onChange={(event) => onChange({ flags: { ...filters.flags, includeDeficit: event.target.checked } })}
+          />
+          учитывать дефицит
         </label>
 
         <div className="run-actions">
