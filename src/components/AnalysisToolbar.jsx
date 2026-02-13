@@ -5,20 +5,6 @@ const GROUP_ANALYSIS_MODES = [
   { id: 'selected-subgroups', label: 'по выбранным подгруппам' }
 ]
 
-const AXIS_PARAMETER_OPTIONS = [
-  { id: 'turnover', label: 'Оборот' },
-  { id: 'profit', label: 'Маржа' },
-  { id: 'sales-frequency', label: 'Частота продаж' },
-  { id: 'demand-variation', label: 'Вариативность спроса' }
-]
-
-const ANALYSIS_TYPE_OPTIONS = [
-  { id: 'abc', label: 'ABC' },
-  { id: 'xyz', label: 'XYZ' },
-  { id: 'xyzWithoutZeros', label: 'XYZ без нулей' },
-  { id: 'fmr', label: 'FMR' }
-]
-
 export function AnalysisToolbar({
   analysisId,
   loading,
@@ -29,6 +15,7 @@ export function AnalysisToolbar({
   onSaveAnalysis,
   onResetFilters,
   onOpenServiceLevelModal,
+  onOpenAnalysisParametersModal,
   runLoading,
   saveLoading
 }) {
@@ -101,74 +88,9 @@ export function AnalysisToolbar({
           </select>
         </label>
 
-        <label className="field-label">
-          Параметр X
-          <select value={filters.axes.x} onChange={(event) => onChange({ axes: { ...filters.axes, x: event.target.value } })}>
-            {AXIS_PARAMETER_OPTIONS.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field-label">
-          Параметр Y
-          <select value={filters.axes.y} onChange={(event) => onChange({ axes: { ...filters.axes, y: event.target.value } })}>
-            {AXIS_PARAMETER_OPTIONS.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field-label">
-          Параметр Z
-          <select value={filters.axes.z} onChange={(event) => onChange({ axes: { ...filters.axes, z: event.target.value } })}>
-            {AXIS_PARAMETER_OPTIONS.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="field-label">
-          Граница A
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={filters.thresholds.a}
-            onChange={(event) => onChange({ thresholds: { ...filters.thresholds, a: event.target.value } })}
-          />
-          {thresholdValidation.fieldErrors.a && <span className="field-error">{thresholdValidation.fieldErrors.a}</span>}
-        </label>
-
-        <label className="field-label">
-          Граница B
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={filters.thresholds.b}
-            onChange={(event) => onChange({ thresholds: { ...filters.thresholds, b: event.target.value } })}
-          />
-          {thresholdValidation.fieldErrors.b && <span className="field-error">{thresholdValidation.fieldErrors.b}</span>}
-        </label>
-
-        <label className="field-label">
-          Граница C
-          <input
-            type="number"
-            min="0"
-            max="100"
-            value={filters.thresholds.c}
-            onChange={(event) => onChange({ thresholds: { ...filters.thresholds, c: event.target.value } })}
-          />
-          {thresholdValidation.fieldErrors.c && <span className="field-error">{thresholdValidation.fieldErrors.c}</span>}
-        </label>
+        <button type="button" className="secondary-btn" onClick={onOpenAnalysisParametersModal}>
+          Параметры анализа
+        </button>
 
         <label className="field-label inline-label">
           <input
@@ -205,28 +127,6 @@ export function AnalysisToolbar({
           />
           учитывать дефицит
         </label>
-
-        <fieldset className="field-label" aria-label="Тип анализа">
-          <legend>Тип анализа</legend>
-          {ANALYSIS_TYPE_OPTIONS.map((analysisType) => (
-            <label key={analysisType.id} className="field-label inline-label">
-              <input
-                type="checkbox"
-                checked={filters.analysisTypes[analysisType.id]}
-                onChange={(event) =>
-                  onChange({
-                    analysisTypes: {
-                      ...filters.analysisTypes,
-                      [analysisType.id]: event.target.checked
-                    }
-                  })
-                }
-              />
-              {analysisType.label}
-            </label>
-          ))}
-          {hasAnalysisTypeError ? <span className="field-error">Выберите минимум один тип анализа</span> : null}
-        </fieldset>
 
         <div className="run-actions">
           <button type="button" disabled={isInvalid || runLoading} onClick={() => onRunAnalysis(filters.groupMode)}>
