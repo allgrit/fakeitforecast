@@ -1,5 +1,5 @@
 export function getRouterBasename(baseUrl) {
-  if (!baseUrl || baseUrl === '/') {
+  if (!baseUrl || baseUrl === '/' || baseUrl === '.' || baseUrl === './') {
     return undefined
   }
 
