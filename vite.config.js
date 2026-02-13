@@ -2,7 +2,9 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/fakeitforecast/' : '/',
+  // Relative asset URLs make GitHub Pages/project-subpath deployments resilient
+  // even if the repo is renamed or served from a mirror path.
+  base: command === 'build' ? './' : '/',
   plugins: [react()],
   test: {
     globals: true,
