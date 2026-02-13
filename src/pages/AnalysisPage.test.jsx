@@ -30,16 +30,18 @@ describe('AnalysisPage smoke', () => {
     expect(screen.getByTestId('analysis-page')).toBeInTheDocument()
     expect(screen.getByText('Анализ abc-xyz')).toBeInTheDocument()
     expect(screen.getByLabelText('Вид классификации')).toBeInTheDocument()
-    expect(screen.getByLabelText('Склады')).toBeInTheDocument()
+    expect(screen.getAllByLabelText('Склады')[0]).toBeInTheDocument()
     expect(screen.getByText('Все товары')).toBeInTheDocument()
     expect(screen.getByText('Результаты ABC-XYZ')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Уровень сервиса 1 года' })).toBeInTheDocument()
+    expect(screen.getAllByLabelText(/Уровень сервиса/)).toHaveLength(9)
   })
 
   it('disables run button when thresholds are invalid', () => {
     renderPage()
 
     const runButton = screen.getByRole('button', { name: 'Провести анализ по группе' })
-    fireEvent.change(screen.getByLabelText('Склады'), { target: { value: 'msk' } })
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
     fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
     fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
     fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
@@ -75,7 +77,7 @@ describe('AnalysisPage smoke', () => {
     vi.stubGlobal('fetch', fetchMock)
     renderPage()
 
-    fireEvent.change(screen.getByLabelText('Склады'), { target: { value: 'msk' } })
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
     fireEvent.change(screen.getByLabelText('Вид классификации'), { target: { value: 'abcxyz' } })
     fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
     fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
@@ -135,5 +137,56 @@ describe('AnalysisPage smoke', () => {
         }
       })
     })
+  })
+
+  it('validates service level inputs and disables apply buttons when invalid', () => {
+    renderPage()
+
+    const applyAllButton = screen.getByRole('button', { name: 'Применить для всех' })
+    const applyScopeButton = screen.getByRole('button', { name: 'Применить по выбранному scope' })
+
+    expect(applyAllButton).toBeEnabled()
+    expect(applyScopeButton).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText('Уровень сервиса AA'), { target: { value: '120' } })
+
+    expect(screen.getByText('Допустимый диапазон 0–100')).toBeInTheDocument()
+    expect(applyAllButton).toBeDisabled()
+    expect(applyScopeButton).toBeDisabled()
+  })
+
+  it('sends POST /analysis/service-level/apply for apply-all and scoped apply', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Применить для всех' }))
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      '/analysis/service-level/apply',
+      expect.objectContaining({ method: 'POST' })
+    )
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Склады' }))
+    const scopeSelect = screen.getByLabelText('Выбранный scope')
+    Array.from(scopeSelect.options).forEach((option) => {
+      option.selected = option.value === 'msk' || option.value === 'spb'
+    })
+    fireEvent.change(scopeSelect)
+    fireEvent.change(screen.getByLabelText('Уровень сервиса AA'), { target: { value: '88' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Применить по выбранному scope' }))
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+
+    const scopedPayload = JSON.parse(fetchMock.mock.calls[1][1].body)
+    expect(scopedPayload).toMatchObject({
+      analysisId: 'abc-xyz',
+      applyToAll: false,
+      scope: { type: 'warehouses', ids: ['msk', 'spb'] }
+    })
+    expect(scopedPayload.cells).toHaveLength(9)
+    expect(scopedPayload.cells.find((cell) => cell.combo === 'AA')).toEqual({ combo: 'AA', serviceLevel: 88 })
   })
 })

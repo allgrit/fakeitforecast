@@ -26,6 +26,42 @@ body {
   box-shadow: 0 2px 12px rgba(7, 29, 63, 0.08);
 }
 
+.analysis-content {
+  display: grid;
+  gap: 16px;
+}
+
+.service-level-panel {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(7, 29, 63, 0.08);
+}
+
+.service-level-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+}
+
+.service-level-table th,
+.service-level-table td {
+  border-bottom: 1px solid #e3e9f5;
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.service-level-actions fieldset {
+  border: 1px solid #cfdaee;
+  border-radius: 8px;
+  margin: 0 0 10px;
+}
+
+.service-level-actions select[multiple] {
+  min-height: 90px;
+}
+
 .analysis-toolbar {
   margin-bottom: 16px;
   display: flex;
