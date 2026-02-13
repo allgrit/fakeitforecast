@@ -5,3 +5,7 @@ export function getRouterBasename(baseUrl) {
 
   return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
 }
+
+export function shouldUseHashRouter(baseUrl) {
+  return getRouterBasename(baseUrl) !== undefined
+}
