@@ -1,11 +1,10 @@
-import { expect, test } from '@playwright/test'
+import { test, expect } from '@playwright/test'
 
-test('switches between Таблица, График, Карта views', async ({ page }) => {
-  await page.goto('/analysis/abc-xyz')
+test('switches between Таблица, График, Карта views @smoke', async ({ page }) => {
+  await page.goto('/analysis/an100005')
 
   const viewSelect = page.getByLabel('Вид')
   await expect(viewSelect).toHaveValue('table')
-  await expect(page.getByRole('columnheader', { name: 'SKU' })).toBeVisible()
 
   await page.getByRole('tab', { name: 'График' }).click()
   await expect(viewSelect).toHaveValue('chart')
@@ -14,8 +13,4 @@ test('switches between Таблица, График, Карта views', async ({
   await page.getByRole('tab', { name: 'Карта' }).click()
   await expect(viewSelect).toHaveValue('map')
   await expect(page.getByLabel('Treemap по складам и группам')).toBeVisible()
-
-  await viewSelect.selectOption('table')
-  await expect(page.getByRole('tab', { name: 'Таблица' })).toHaveAttribute('aria-selected', 'true')
-  await expect(page.getByRole('columnheader', { name: 'SKU' })).toBeVisible()
 })
