@@ -1,0 +1,152 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`AnalysisWorkspace scatter > matches visual snapshot of scatter chart 1`] = `
+<div
+  class="scatter-wrap"
+>
+  <svg
+    aria-label="ABC XYZ scatter chart"
+    role="img"
+    viewBox="0 0 560 380"
+  >
+    <rect
+      fill="#f8faff"
+      height="300"
+      stroke="#d4def0"
+      width="480"
+      x="40"
+      y="40"
+    />
+    <g>
+      <line
+        stroke="#98a2b3"
+        stroke-dasharray="5 5"
+        x1="400"
+        x2="400"
+        y1="40"
+        y2="340"
+      />
+      <line
+        stroke="#98a2b3"
+        stroke-dasharray="5 5"
+        x1="40"
+        x2="520"
+        y1="115"
+        y2="115"
+      />
+      <text
+        fill="#667085"
+        font-size="12"
+        x="404"
+        y="356"
+      >
+        X-
+        A
+      </text>
+      <text
+        fill="#667085"
+        font-size="12"
+        x="8"
+        y="111"
+      >
+        Y-
+        A
+      </text>
+    </g>
+    <g>
+      <line
+        stroke="#98a2b3"
+        stroke-dasharray="5 5"
+        x1="256"
+        x2="256"
+        y1="40"
+        y2="340"
+      />
+      <line
+        stroke="#98a2b3"
+        stroke-dasharray="5 5"
+        x1="40"
+        x2="520"
+        y1="205"
+        y2="205"
+      />
+      <text
+        fill="#667085"
+        font-size="12"
+        x="260"
+        y="356"
+      >
+        X-
+        B
+      </text>
+      <text
+        fill="#667085"
+        font-size="12"
+        x="8"
+        y="201"
+      >
+        Y-
+        B
+      </text>
+    </g>
+    <g>
+      <line
+        stroke="#98a2b3"
+        stroke-dasharray="5 5"
+        x1="112"
+        x2="112"
+        y1="40"
+        y2="340"
+      />
+      <line
+        stroke="#98a2b3"
+        stroke-dasharray="5 5"
+        x1="40"
+        x2="520"
+        y1="295"
+        y2="295"
+      />
+      <text
+        fill="#667085"
+        font-size="12"
+        x="116"
+        y="356"
+      >
+        X-
+        C
+      </text>
+      <text
+        fill="#667085"
+        font-size="12"
+        x="8"
+        y="291"
+      >
+        Y-
+        C
+      </text>
+    </g>
+    <g
+      class="scatter-point"
+      data-testid="scatter-point-SKU-001-0"
+      tabindex="0"
+    >
+      <circle
+        cx="472"
+        cy="94.00000000000003"
+        fill="#155eef"
+        r="6"
+      />
+    </g>
+    <g
+      class="scatter-point"
+      data-testid="scatter-point-SKU-002-1"
+      tabindex="0"
+    >
+      <polygon
+        fill="#b54708"
+        points="112,267 105,280 119,280"
+      />
+    </g>
+  </svg>
+</div>
+`;
