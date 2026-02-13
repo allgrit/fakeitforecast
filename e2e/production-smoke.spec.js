@@ -11,3 +11,12 @@ test('production build renders analysis shell and is not blank @smoke @productio
   await expect(page.getByRole('heading', { name: 'Анализ ABC/XYZ' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Запустить анализ' })).toBeVisible()
 })
+
+
+test('shows static bootstrap page when SPA entry script is unavailable @smoke @production', async ({ page }) => {
+  await page.route('**/src/main.jsx', (route) => route.abort())
+  await page.goto('/')
+
+  await expect(page.getByRole('heading', { name: 'FakeItForecast' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Перейти к демонстрационному анализу ABC/XYZ' })).toBeVisible()
+})
