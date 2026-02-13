@@ -15,7 +15,9 @@ describe('AnalysisPage smoke', () => {
 
     expect(screen.getByTestId('analysis-page')).toBeInTheDocument()
     expect(screen.getByText('Анализ abc-xyz')).toBeInTheDocument()
-    expect(screen.getByText('Нет данных классификации')).toBeInTheDocument()
+    expect(screen.getByLabelText('Вид классификации')).toBeInTheDocument()
+    expect(screen.getByLabelText('Склады')).toBeInTheDocument()
+    expect(screen.getByText('Все товары')).toBeInTheDocument()
     expect(screen.getByText('Нет данных для отображения')).toBeInTheDocument()
   })
 })
