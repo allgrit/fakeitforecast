@@ -17,7 +17,23 @@ const initialFilters = {
   stepDays: 1,
   dataMode: 'forecast',
   viewType: 'table',
-  groupMode: 'by-subgroups'
+  groupMode: 'by-subgroups',
+  axes: {
+    x: 'turnover',
+    y: 'sales-frequency',
+    z: 'demand-variation'
+  },
+  thresholds: {
+    a: 80,
+    b: 50,
+    c: 20
+  },
+  flags: {
+    excludeNewItems: false,
+    clearSalesHistoryFromPromotions: false,
+    aggregateByWarehouses: false,
+    includeDeficit: false
+  }
 }
 
 export function AnalysisPage() {
@@ -50,7 +66,19 @@ export function AnalysisPage() {
       },
       dataMode: filters.dataMode,
       view: filters.viewType,
-      groupAnalysisMode: groupMode
+      groupAnalysisMode: groupMode,
+      axes: filters.axes,
+      thresholds: {
+        a: Number(filters.thresholds.a),
+        b: Number(filters.thresholds.b),
+        c: Number(filters.thresholds.c)
+      },
+      flags: {
+        includeNewItems: !filters.flags.excludeNewItems,
+        includePromotions: !filters.flags.clearSalesHistoryFromPromotions,
+        aggregateByWarehouses: filters.flags.aggregateByWarehouses,
+        includeDeficit: filters.flags.includeDeficit
+      }
     }
 
     setRunLoading(true)
