@@ -7,6 +7,7 @@ import { mockAnalysisData } from '../data/mockAnalysisData'
 import { SERVICE_LEVEL_COMBINATIONS } from '../utils/analysisValidation'
 import { ServiceLevelModal } from '../components/ServiceLevelModal'
 import { AnalysisParametersModal } from '../components/AnalysisParametersModal'
+import { analysisClient } from '../api/analysisClient'
 
 const FEATURE_USE_MOCKS = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false'
 const FEATURE_LOADING = import.meta.env.VITE_SHOW_ANALYSIS_LOADING === 'true'
@@ -49,39 +50,49 @@ const initialFilters = {
 
 const initialServiceLevels = SERVICE_LEVEL_COMBINATIONS.reduce((acc, combination) => ({ ...acc, [combination]: 95 }), {})
 
-const DEFAULT_ERROR_MESSAGE = 'Не удалось выполнить запрос. Попробуйте снова.'
-const ERROR_MESSAGES = {
-  400: 'Проверьте заполнение формы. Некоторые поля заполнены некорректно.',
-  409: 'Операция не может быть выполнена из-за конфликта данных. Обновите анализ и повторите попытку.',
-  422: 'Запрос отклонен бизнес-правилами. Измените параметры и повторите.'
+const dataModeMap = {
+  forecast: 'FORECAST',
+  fact: 'FACT',
+  'fact-and-forecast': 'FACT_AND_FORECAST'
 }
 
-async function parseApiError(response) {
-  let payload = null
-
-  try {
-    payload = await response.json()
-  } catch {
-    payload = null
-  }
-
-  const detail = payload?.message || payload?.error || payload?.detail
-  const statusMessage = ERROR_MESSAGES[response.status] || DEFAULT_ERROR_MESSAGE
-  return detail ? `${statusMessage} (${detail})` : statusMessage
+const viewTypeMap = {
+  table: 'TABLE',
+  map: 'MAP',
+  chart: 'CHART'
 }
 
-async function postJson(url, payload) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  })
+const scopeModeMap = {
+  'by-subgroups': 'SUBGROUPS',
+  'selected-subgroups': 'SELECTED_SUBGROUPS'
+}
 
-  if (!response.ok) {
-    throw new Error(await parseApiError(response))
+function buildRunConfiguration(filters, groupMode) {
+  return {
+    period: {
+      from: filters.periodFrom,
+      to: filters.periodTo
+    },
+    dataMode: dataModeMap[filters.dataMode] || 'FORECAST',
+    viewType: viewTypeMap[filters.viewType] || 'TABLE',
+    scope: {
+      mode: scopeModeMap[groupMode] || 'GROUP',
+      ...(filters.selectedNodeId ? { groupId: filters.selectedNodeId } : {}),
+      ...(groupMode === 'selected-subgroups' ? { subgroupIds: [] } : {})
+    },
+    axes: filters.axes,
+    thresholds: {
+      a: Number(filters.thresholds.a),
+      b: Number(filters.thresholds.b),
+      c: Number(filters.thresholds.c)
+    },
+    flags: {
+      includeNewItems: !filters.flags.excludeNewItems,
+      includePromotions: !filters.flags.clearSalesHistoryFromPromotions,
+      aggregateByWarehouses: filters.flags.aggregateByWarehouses,
+      includeDeficit: filters.flags.includeDeficit
+    }
   }
-
-  return response
 }
 
 function trackTelemetry(eventName, payload) {
@@ -142,12 +153,6 @@ export function AnalysisPage() {
     const payload = {
       analysisId,
       applyToAll,
-      scope: applyToAll
-        ? null
-        : {
-            type: nextScopeType,
-            ids: nextSelectedScopeIds
-          },
       cells: SERVICE_LEVEL_COMBINATIONS.map((combo) => ({
         combo,
         serviceLevel: Number(nextServiceLevels[combo])
@@ -157,7 +162,7 @@ export function AnalysisPage() {
     setApplyLoading(true)
     setFeedback(null)
     try {
-      await postJson('/analysis/service-level/apply', payload)
+      await analysisClient.applyServiceLevels(payload)
       trackTelemetry('analysis_service_level_apply', { analysisId, applyToAll, scopeType: nextScopeType })
       setScopeType(nextScopeType)
       setSelectedScopeIds(nextSelectedScopeIds)
@@ -172,42 +177,12 @@ export function AnalysisPage() {
   }
 
   const runAnalysis = async (groupMode) => {
-    const selectedAnalysisTypes = Object.entries(filters.analysisTypes)
-      .filter(([, isEnabled]) => isEnabled)
-      .map(([analysisType]) => analysisType)
-
-    const payload = {
-      analysisId,
-      warehouseId: filters.warehouseId,
-      nodeId: filters.selectedNodeId,
-      classificationKind: filters.classificationKind,
-      period: {
-        from: filters.periodFrom,
-        to: filters.periodTo,
-        stepDays: filters.stepDays
-      },
-      dataMode: filters.dataMode,
-      view: filters.viewType,
-      groupAnalysisMode: groupMode,
-      analysisTypes: selectedAnalysisTypes,
-      axes: filters.axes,
-      thresholds: {
-        a: Number(filters.thresholds.a),
-        b: Number(filters.thresholds.b),
-        c: Number(filters.thresholds.c)
-      },
-      flags: {
-        includeNewItems: !filters.flags.excludeNewItems,
-        includePromotions: !filters.flags.clearSalesHistoryFromPromotions,
-        aggregateByWarehouses: filters.flags.aggregateByWarehouses,
-        includeDeficit: filters.flags.includeDeficit
-      }
-    }
+    const payload = buildRunConfiguration(filters, groupMode)
 
     setRunLoading(true)
     setFeedback(null)
     try {
-      await postJson('/analysis/run', payload)
+      await analysisClient.runAnalysis(payload)
       trackTelemetry('analysis_run_started', { analysisId, groupMode })
       showSuccess('Анализ запущен.')
     } catch (error) {
@@ -220,18 +195,14 @@ export function AnalysisPage() {
   const saveAnalysisSlice = async () => {
     const payload = {
       analysisId,
-      filters,
-      scope: {
-        type: scopeType,
-        ids: selectedScopeIds
-      },
-      serviceLevels
+      name: `analysis-${analysisId}`,
+      configuration: buildRunConfiguration(filters, filters.groupMode)
     }
 
     setSaveLoading(true)
     setFeedback(null)
     try {
-      await postJson('/analysis/save', payload)
+      await analysisClient.saveAnalysisSlice(payload)
       showSuccess('Текущий срез анализа сохранен.')
     } catch (error) {
       showError(error.message)
