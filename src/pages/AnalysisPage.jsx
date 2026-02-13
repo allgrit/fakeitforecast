@@ -106,7 +106,13 @@ export function AnalysisPage() {
       />
       <div className="analysis-body">
         <ClassificationSidebar loading={FEATURE_LOADING} data={analysisData} filters={filters} onChange={updateFilters} />
-        <AnalysisWorkspace loading={FEATURE_LOADING} data={analysisData} thresholds={filters.thresholds} />
+        <AnalysisWorkspace
+          loading={FEATURE_LOADING}
+          data={analysisData}
+          thresholds={filters.thresholds}
+          viewType={filters.viewType}
+          onViewChange={(viewType) => updateFilters({ viewType })}
+        />
       </div>
     </div>
   )
