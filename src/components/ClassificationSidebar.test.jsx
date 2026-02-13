@@ -1,26 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ClassificationSidebar } from './ClassificationSidebar'
+import { analysisDatasetMap } from '../data/datasets'
 
-const data = {
-  classificationKinds: [{ id: 'abcxyz', label: 'ABC/XYZ' }],
-  warehouses: [{ id: 'all', name: 'Все склады' }],
-  productTree: [
-    {
-      id: 'grp-1',
-      name: 'Молочная продукция',
-      type: 'group',
-      children: [
-        {
-          id: 'sub-1',
-          name: 'Молоко',
-          type: 'subgroup',
-          children: [{ id: 'sku-1', name: 'Молоко 3.2%', type: 'product' }]
-        }
-      ]
-    }
-  ]
-}
+const data = analysisDatasetMap['abc-xyz']
 
 describe('ClassificationSidebar', () => {
   it('selects a tree node', () => {
@@ -36,7 +19,7 @@ describe('ClassificationSidebar', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Молочная продукция' }))
 
-    expect(onChange).toHaveBeenCalledWith({ selectedNodeId: 'grp-1' })
+    expect(onChange).toHaveBeenCalledWith({ selectedNodeId: 'grp-dairy' })
   })
 
   it('highlights search match in tree', () => {

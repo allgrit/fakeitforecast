@@ -1,0 +1,45 @@
+{
+  "id": "outliers",
+  "meta": {
+    "title": "Набор с выбросами",
+    "businessScenario": "Проверка аналитики на аномальные продажи из-за промо и ошибок ввода.",
+    "size": {
+      "results": 12,
+      "warehouses": 3,
+      "nodes": 6
+    },
+    "expectedRenderingFeatures": [
+      "На графике заметны экстремальные точки",
+      "Таблица содержит отрицательные и сверхбольшие значения",
+      "Переключение вида не ломает отображение"
+    ]
+  },
+  "name": "ABC-XYZ анализ: выбросы",
+  "classificationKinds": [
+    { "id": "abcxyz", "label": "ABC/XYZ" },
+    { "id": "abc-fmr", "label": "ABC/FMR" }
+  ],
+  "warehouses": [
+    { "id": "msk", "name": "Основной склад МСК" },
+    { "id": "spb", "name": "РЦ СПБ" },
+    { "id": "nsk", "name": "РЦ НСК" }
+  ],
+  "productTree": [
+    { "id": "grp-beverages", "name": "Напитки", "type": "group", "children": [{ "id": "sku-200", "name": "Сок яблочный 1л", "type": "product" }] },
+    { "id": "grp-grocery", "name": "Бакалея", "type": "group", "children": [{ "id": "sku-201", "name": "Макароны 400г", "type": "product" }] }
+  ],
+  "results": [
+    { "sku": "SKU-200", "abc": "A", "xyz": "X", "x": 95, "y": 92, "warehouse": "MSK", "group": "Напитки", "volume": 380 },
+    { "sku": "SKU-201", "abc": "A", "xyz": "X", "x": 98, "y": 97, "warehouse": "MSK", "group": "Напитки", "volume": 12000 },
+    { "sku": "SKU-202", "abc": "B", "xyz": "Y", "x": 59, "y": 58, "warehouse": "SPB", "group": "Бакалея", "volume": 210 },
+    { "sku": "SKU-203", "abc": "C", "xyz": "Z", "x": 12, "y": 8, "warehouse": "SPB", "group": "Бакалея", "volume": -15 },
+    { "sku": "SKU-204", "abc": "A", "xyz": "Y", "x": 82, "y": 63, "warehouse": "NSK", "group": "Напитки", "volume": 250 },
+    { "sku": "SKU-205", "abc": "C", "xyz": "X", "x": 24, "y": 75, "warehouse": "NSK", "group": "Бакалея", "volume": 77 },
+    { "sku": "SKU-206", "abc": "B", "xyz": "Z", "x": 45, "y": 20, "warehouse": "MSK", "group": "Бакалея", "volume": 95 },
+    { "sku": "SKU-207", "abc": "A", "xyz": "X", "x": 99, "y": 99, "warehouse": "SPB", "group": "Напитки", "volume": 18000 },
+    { "sku": "SKU-208", "abc": "B", "xyz": "X", "x": 66, "y": 72, "warehouse": "NSK", "group": "Бакалея", "volume": 155 },
+    { "sku": "SKU-209", "abc": "C", "xyz": "Y", "x": 33, "y": 43, "warehouse": "SPB", "group": "Напитки", "volume": 64 },
+    { "sku": "SKU-210", "abc": "B", "xyz": "Y", "x": 54, "y": 57, "warehouse": "MSK", "group": "Бакалея", "volume": 188 },
+    { "sku": "SKU-211", "abc": "A", "xyz": "Z", "x": 73, "y": 22, "warehouse": "NSK", "group": "Напитки", "volume": 134 }
+  ]
+}

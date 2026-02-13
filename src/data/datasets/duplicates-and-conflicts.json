@@ -1,0 +1,41 @@
+{
+  "id": "duplicates-and-conflicts",
+  "meta": {
+    "title": "Набор с дублями и конфликтами",
+    "businessScenario": "Имитация объединения нескольких источников, где один SKU может иметь конфликтующие классы и повторные записи.",
+    "size": {
+      "results": 10,
+      "warehouses": 2,
+      "nodes": 5
+    },
+    "expectedRenderingFeatures": [
+      "Повторяющиеся SKU отображаются как отдельные строки",
+      "Видны конфликтующие классификации для одного SKU",
+      "Стабильная работа сортировок и фильтров"
+    ]
+  },
+  "name": "ABC-XYZ анализ: дубли и конфликты",
+  "classificationKinds": [
+    { "id": "abcxyz", "label": "ABC/XYZ" }
+  ],
+  "warehouses": [
+    { "id": "msk", "name": "Основной склад МСК" },
+    { "id": "spb", "name": "РЦ СПБ" }
+  ],
+  "productTree": [
+    { "id": "grp-dairy", "name": "Молочная продукция", "type": "group", "children": [{ "id": "sku-300", "name": "Творог 5%", "type": "product" }] },
+    { "id": "grp-snacks", "name": "Снеки", "type": "group", "children": [{ "id": "sku-301", "name": "Чипсы 150г", "type": "product" }] }
+  ],
+  "results": [
+    { "sku": "SKU-300", "abc": "A", "xyz": "X", "x": 88, "y": 82, "warehouse": "MSK", "group": "Молочная продукция", "volume": 205 },
+    { "sku": "SKU-300", "abc": "B", "xyz": "Y", "x": 61, "y": 54, "warehouse": "MSK", "group": "Молочная продукция", "volume": 198 },
+    { "sku": "SKU-301", "abc": "B", "xyz": "X", "x": 63, "y": 74, "warehouse": "SPB", "group": "Снеки", "volume": 166 },
+    { "sku": "SKU-301", "abc": "B", "xyz": "X", "x": 63, "y": 74, "warehouse": "SPB", "group": "Снеки", "volume": 166 },
+    { "sku": "SKU-302", "abc": "C", "xyz": "Z", "x": 18, "y": 12, "warehouse": "MSK", "group": "Снеки", "volume": 59 },
+    { "sku": "SKU-303", "abc": "A", "xyz": "Y", "x": 80, "y": 66, "warehouse": "SPB", "group": "Молочная продукция", "volume": 173 },
+    { "sku": "SKU-304", "abc": "C", "xyz": "X", "x": 30, "y": 70, "warehouse": "MSK", "group": "Снеки", "volume": 96 },
+    { "sku": "SKU-304", "abc": "A", "xyz": "X", "x": 85, "y": 91, "warehouse": "MSK", "group": "Снеки", "volume": 211 },
+    { "sku": "SKU-305", "abc": "B", "xyz": "Z", "x": 48, "y": 34, "warehouse": "SPB", "group": "Молочная продукция", "volume": 118 },
+    { "sku": "SKU-306", "abc": "A", "xyz": "X", "x": 92, "y": 89, "warehouse": "MSK", "group": "Молочная продукция", "volume": 246 }
+  ]
+}
