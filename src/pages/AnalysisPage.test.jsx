@@ -37,22 +37,14 @@ describe('AnalysisPage smoke', () => {
     expect(screen.queryByLabelText('Уровень сервиса AA')).not.toBeInTheDocument()
   })
 
-  it('disables run button when thresholds are invalid', () => {
+  it('opens and closes analysis parameters modal', () => {
     renderPage()
 
-    const runButton = screen.getByRole('button', { name: 'Провести анализ по группе' })
-    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
-    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
-    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Параметры анализа' }))
+    expect(screen.getByRole('dialog', { name: 'Параметры анализа' })).toBeInTheDocument()
 
-    expect(runButton).toBeEnabled()
-
-    fireEvent.change(screen.getByLabelText(/Граница A/), { target: { value: '10' } })
-    fireEvent.change(screen.getByLabelText(/Граница B/), { target: { value: '20' } })
-
-    expect(screen.getAllByText('Границы должны быть по убыванию: A ≥ B ≥ C')).toHaveLength(3)
-    expect(runButton).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }))
+    expect(screen.queryByRole('dialog', { name: 'Параметры анализа' })).not.toBeInTheDocument()
   })
 
   it('syncs Вид select with workspace tabs', () => {
@@ -79,6 +71,34 @@ describe('AnalysisPage smoke', () => {
     )
   })
 
+
+  it('does not change /analysis/run payload after cancelling analysis parameters modal', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
+    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
+    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Параметры анализа' }))
+    fireEvent.change(screen.getByLabelText('Параметр X'), { target: { value: 'profit' } })
+    fireEvent.change(screen.getByLabelText('Параметр Y'), { target: { value: 'turnover' } })
+    fireEvent.change(screen.getByLabelText('Параметр Z'), { target: { value: 'sales-frequency' } })
+    fireEvent.change(screen.getByLabelText(/Граница A/), { target: { value: '70' } })
+    fireEvent.change(screen.getByLabelText(/Граница B/), { target: { value: '40' } })
+    fireEvent.change(screen.getByLabelText(/Граница C/), { target: { value: '10' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/run')).toHaveLength(1))
+    const runPayload = JSON.parse(fetchMock.mock.calls.find(([url]) => url === '/analysis/run')[1].body)
+    expect(runPayload.axes).toEqual({ x: 'turnover', y: 'sales-frequency', z: 'demand-variation' })
+    expect(runPayload.thresholds).toEqual({ a: 80, b: 50, c: 20 })
+  })
+
   it('sends changed parameters to POST /analysis/run', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true })
     vi.stubGlobal('fetch', fetchMock)
@@ -94,6 +114,7 @@ describe('AnalysisPage smoke', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Молочная продукция' }))
     fireEvent.change(screen.getByLabelText('Режим анализа по группе'), { target: { value: 'selected-subgroups' } })
 
+    fireEvent.click(screen.getByRole('button', { name: 'Параметры анализа' }))
     fireEvent.change(screen.getByLabelText('Параметр X'), { target: { value: 'profit' } })
     fireEvent.change(screen.getByLabelText('Параметр Y'), { target: { value: 'turnover' } })
     fireEvent.change(screen.getByLabelText('Параметр Z'), { target: { value: 'sales-frequency' } })
@@ -101,6 +122,7 @@ describe('AnalysisPage smoke', () => {
     fireEvent.change(screen.getByLabelText(/Граница A/), { target: { value: '75' } })
     fireEvent.change(screen.getByLabelText(/Граница B/), { target: { value: '45' } })
     fireEvent.change(screen.getByLabelText(/Граница C/), { target: { value: '15' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Применить' }))
 
     fireEvent.click(screen.getByRole('checkbox', { name: 'не анализировать новые товары' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'очищать историю продаж от акций' }))
@@ -161,7 +183,9 @@ describe('AnalysisPage smoke', () => {
     fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
     fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
 
+    fireEvent.click(screen.getByRole('button', { name: 'Параметры анализа' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'XYZ' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Применить' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
 
@@ -180,10 +204,12 @@ describe('AnalysisPage smoke', () => {
     fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
     fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
 
+    fireEvent.click(screen.getByRole('button', { name: 'Параметры анализа' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'ABC' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'XYZ' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'XYZ без нулей' }))
     fireEvent.click(screen.getByRole('checkbox', { name: 'FMR' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Применить' }))
 
     fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
 
@@ -192,16 +218,15 @@ describe('AnalysisPage smoke', () => {
     expect(runPayload.analysisTypes).toEqual(['xyzWithoutZeros', 'fmr'])
   })
 
-  it('disables run button and shows validation if all analysis types are disabled', () => {
+  it('blocks apply button when analysis parameters are invalid', () => {
     renderPage()
 
-    const runButton = screen.getByRole('button', { name: 'Провести анализ по группе' })
+    fireEvent.click(screen.getByRole('button', { name: 'Параметры анализа' }))
+    fireEvent.change(screen.getByLabelText(/Граница A/), { target: { value: '10' } })
+    fireEvent.change(screen.getByLabelText(/Граница B/), { target: { value: '20' } })
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'ABC' }))
-    fireEvent.click(screen.getByRole('checkbox', { name: 'XYZ' }))
-
-    expect(runButton).toBeDisabled()
-    expect(screen.getByText('Выберите минимум один тип анализа')).toBeInTheDocument()
+    expect(screen.getAllByText('Границы должны быть по убыванию: A ≥ B ≥ C')).toHaveLength(3)
+    expect(screen.getByRole('button', { name: 'Применить' })).toBeDisabled()
   })
 
   it('shows api error messages with readable text', async () => {

@@ -6,6 +6,7 @@ import { ClassificationSidebar } from '../components/ClassificationSidebar'
 import { mockAnalysisData } from '../data/mockAnalysisData'
 import { SERVICE_LEVEL_COMBINATIONS } from '../utils/analysisValidation'
 import { ServiceLevelModal } from '../components/ServiceLevelModal'
+import { AnalysisParametersModal } from '../components/AnalysisParametersModal'
 
 const FEATURE_USE_MOCKS = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false'
 const FEATURE_LOADING = import.meta.env.VITE_SHOW_ANALYSIS_LOADING === 'true'
@@ -103,9 +104,11 @@ export function AnalysisPage() {
   const [feedback, setFeedback] = useState(null)
   const [resetKey, setResetKey] = useState(0)
   const [serviceLevelModalOpen, setServiceLevelModalOpen] = useState(false)
+  const [analysisParametersModalOpen, setAnalysisParametersModalOpen] = useState(false)
   const [draftScopeType, setDraftScopeType] = useState('groups')
   const [draftSelectedScopeIds, setDraftSelectedScopeIds] = useState([])
   const [draftServiceLevels, setDraftServiceLevels] = useState(initialServiceLevels)
+  const [draftFilters, setDraftFilters] = useState(initialFilters)
 
   const analysisData = useMemo(() => {
     if (!FEATURE_USE_MOCKS || !analysisId) {
@@ -253,6 +256,21 @@ export function AnalysisPage() {
     setServiceLevelModalOpen(true)
   }
 
+  const openAnalysisParametersModal = () => {
+    setDraftFilters(filters)
+    setAnalysisParametersModalOpen(true)
+  }
+
+  const closeAnalysisParametersModal = () => {
+    setAnalysisParametersModalOpen(false)
+    setDraftFilters(filters)
+  }
+
+  const applyAnalysisParameters = () => {
+    setFilters(draftFilters)
+    setAnalysisParametersModalOpen(false)
+  }
+
   return (
     <div className="analysis-page" data-testid="analysis-page">
       {feedback ? <div className={`api-feedback ${feedback.type}`}>{feedback.message}</div> : null}
@@ -267,6 +285,7 @@ export function AnalysisPage() {
         onSaveAnalysis={saveAnalysisSlice}
         onResetFilters={resetAllFilters}
         onOpenServiceLevelModal={openServiceLevelModal}
+        onOpenAnalysisParametersModal={openAnalysisParametersModal}
         runLoading={runLoading}
         saveLoading={saveLoading}
       />
@@ -300,6 +319,13 @@ export function AnalysisPage() {
                 serviceLevels: draftServiceLevels
               })
             }
+          />
+          <AnalysisParametersModal
+            isOpen={analysisParametersModalOpen}
+            draftFilters={draftFilters}
+            onDraftChange={(patch) => setDraftFilters((prev) => ({ ...prev, ...patch }))}
+            onClose={closeAnalysisParametersModal}
+            onApply={applyAnalysisParameters}
           />
           <AnalysisWorkspace
             key={`workspace-${resetKey}`}
