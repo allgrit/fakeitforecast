@@ -55,9 +55,10 @@ describe('AnalysisPage smoke', () => {
     expect(runButton).toBeDisabled()
   })
 
-
-
   it('syncs Вид select with workspace tabs', () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+
     renderPage()
 
     const viewSelect = screen.getByLabelText('Вид')
@@ -71,7 +72,13 @@ describe('AnalysisPage smoke', () => {
 
     fireEvent.change(viewSelect, { target: { value: 'table' } })
     expect(screen.getByRole('tab', { name: 'Таблица' })).toHaveAttribute('aria-selected', 'true')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/telemetry',
+      expect.objectContaining({ method: 'POST' })
+    )
   })
+
   it('sends changed parameters to POST /analysis/run', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true })
     vi.stubGlobal('fetch', fetchMock)
@@ -102,7 +109,9 @@ describe('AnalysisPage smoke', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/run')).toHaveLength(1)
+    )
     expect(fetchMock).toHaveBeenCalledWith('/analysis/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -137,6 +146,27 @@ describe('AnalysisPage smoke', () => {
         }
       })
     })
+
+    expect(fetchMock.mock.calls.some(([url]) => url === '/telemetry')).toBe(true)
+  })
+
+  it('shows api error messages with readable text', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: vi.fn().mockResolvedValue({ message: 'Некорректный набор фильтров' })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Применить для всех' }))
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Запрос отклонен бизнес-правилами. Измените параметры и повторите. (Некорректный набор фильтров)')
+      ).toBeInTheDocument()
+    })
   })
 
   it('validates service level inputs and disables apply buttons when invalid', () => {
@@ -162,7 +192,7 @@ describe('AnalysisPage smoke', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Применить для всех' }))
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/service-level/apply')).toHaveLength(1))
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
       '/analysis/service-level/apply',
@@ -178,9 +208,10 @@ describe('AnalysisPage smoke', () => {
     fireEvent.change(screen.getByLabelText('Уровень сервиса AA'), { target: { value: '88' } })
     fireEvent.click(screen.getByRole('button', { name: 'Применить по выбранному scope' }))
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/service-level/apply')).toHaveLength(2))
 
-    const scopedPayload = JSON.parse(fetchMock.mock.calls[1][1].body)
+    const scopedCall = fetchMock.mock.calls.findLast(([url]) => url === '/analysis/service-level/apply')
+    const scopedPayload = JSON.parse(scopedCall[1].body)
     expect(scopedPayload).toMatchObject({
       analysisId: 'abc-xyz',
       applyToAll: false,
@@ -188,5 +219,33 @@ describe('AnalysisPage smoke', () => {
     })
     expect(scopedPayload.cells).toHaveLength(9)
     expect(scopedPayload.cells.find((cell) => cell.combo === 'AA')).toEqual({ combo: 'AA', serviceLevel: 88 })
+  })
+
+  it('saves current analysis slice and resets all filters', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
+    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
+    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
+    fireEvent.click(screen.getByRole('checkbox', { name: 'не анализировать новые товары' }))
+    fireEvent.change(screen.getByLabelText('Уровень сервиса AA'), { target: { value: '88' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/save')).toHaveLength(1))
+    const savePayload = JSON.parse(fetchMock.mock.calls.find(([url]) => url === '/analysis/save')[1].body)
+    expect(savePayload.filters.warehouseId).toBe('msk')
+    expect(savePayload.serviceLevels.AA).toBe('88')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Убрать все фильтры' }))
+
+    expect(screen.getAllByLabelText('Склады')[0]).toHaveValue('')
+    expect(screen.getByLabelText('От')).toHaveValue('')
+    expect(screen.getByLabelText('До')).toHaveValue('')
+    expect(screen.getByRole('checkbox', { name: 'не анализировать новые товары' })).not.toBeChecked()
+    expect(screen.getByLabelText('Уровень сервиса AA')).toHaveValue(95)
+    expect(screen.getByLabelText('Поиск')).toHaveValue('')
   })
 })
