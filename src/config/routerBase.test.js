@@ -19,11 +19,14 @@ describe('getRouterBasename', () => {
 })
 
 describe('shouldUseHashRouter', () => {
-  it('returns false for root and relative-base deployments', () => {
+  it('returns false for root base deployments', () => {
     expect(shouldUseHashRouter('/')).toBe(false)
     expect(shouldUseHashRouter('')).toBe(false)
-    expect(shouldUseHashRouter('.')).toBe(false)
-    expect(shouldUseHashRouter('./')).toBe(false)
+  })
+
+  it('returns true for relative-base deployments', () => {
+    expect(shouldUseHashRouter('.')).toBe(true)
+    expect(shouldUseHashRouter('./')).toBe(true)
   })
 
   it('returns true for nested deployments like GitHub Pages project sites', () => {
