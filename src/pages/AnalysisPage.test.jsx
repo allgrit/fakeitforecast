@@ -128,6 +128,7 @@ describe('AnalysisPage smoke', () => {
         dataMode: 'fact',
         view: 'map',
         groupAnalysisMode: 'selected-subgroups',
+        analysisTypes: ['abc', 'xyz'],
         axes: {
           x: 'profit',
           y: 'turnover',
@@ -148,6 +149,59 @@ describe('AnalysisPage smoke', () => {
     })
 
     expect(fetchMock.mock.calls.some(([url]) => url === '/telemetry')).toBe(true)
+  })
+
+  it('runs analysis with only ABC type selected', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
+    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
+    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'XYZ' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/run')).toHaveLength(1))
+    const runPayload = JSON.parse(fetchMock.mock.calls.find(([url]) => url === '/analysis/run')[1].body)
+    expect(runPayload.analysisTypes).toEqual(['abc'])
+  })
+
+  it('serializes XYZ без нулей и FMR in run payload', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
+    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
+    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'ABC' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'XYZ' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'XYZ без нулей' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'FMR' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/run')).toHaveLength(1))
+    const runPayload = JSON.parse(fetchMock.mock.calls.find(([url]) => url === '/analysis/run')[1].body)
+    expect(runPayload.analysisTypes).toEqual(['xyzWithoutZeros', 'fmr'])
+  })
+
+  it('disables run button and shows validation if all analysis types are disabled', () => {
+    renderPage()
+
+    const runButton = screen.getByRole('button', { name: 'Провести анализ по группе' })
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'ABC' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'XYZ' }))
+
+    expect(runButton).toBeDisabled()
+    expect(screen.getByText('Выберите минимум один тип анализа')).toBeInTheDocument()
   })
 
   it('shows api error messages with readable text', async () => {
