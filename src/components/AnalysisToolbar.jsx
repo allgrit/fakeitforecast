@@ -17,7 +17,8 @@ export function AnalysisToolbar({
   onOpenServiceLevelModal,
   onOpenAnalysisParametersModal,
   runLoading,
-  saveLoading
+  saveLoading,
+  controlsLocked
 }) {
   if (loading) {
     return <div className="skeleton toolbar-skeleton" data-testid="toolbar-skeleton" />
@@ -47,6 +48,7 @@ export function AnalysisToolbar({
           <input
             type="date"
             value={filters.periodFrom}
+            disabled={controlsLocked}
             onChange={(event) => onChange({ periodFrom: event.target.value })}
           />
         </label>
@@ -56,6 +58,7 @@ export function AnalysisToolbar({
           <input
             type="date"
             value={filters.periodTo}
+            disabled={controlsLocked}
             onChange={(event) => onChange({ periodTo: event.target.value })}
           />
         </label>
@@ -66,6 +69,7 @@ export function AnalysisToolbar({
             type="number"
             min="1"
             value={filters.stepDays}
+            disabled={controlsLocked}
             onChange={(event) => onChange({ stepDays: Number(event.target.value) || 1 })}
           />
         </label>
@@ -88,7 +92,7 @@ export function AnalysisToolbar({
           </select>
         </label>
 
-        <button type="button" className="secondary-btn" onClick={onOpenAnalysisParametersModal}>
+        <button type="button" className="secondary-btn" onClick={onOpenAnalysisParametersModal} disabled={controlsLocked}>
           Параметры анализа
         </button>
 
@@ -129,7 +133,7 @@ export function AnalysisToolbar({
         </label>
 
         <div className="run-actions">
-          <button type="button" disabled={isInvalid || runLoading} onClick={() => onRunAnalysis(filters.groupMode)}>
+          <button type="button" disabled={isInvalid || runLoading || controlsLocked} onClick={() => onRunAnalysis(filters.groupMode)}>
             Провести анализ по группе
           </button>
           <button type="button" disabled={saveLoading} onClick={onSaveAnalysis}>
@@ -147,7 +151,7 @@ export function AnalysisToolbar({
               aria-label="Режим анализа по группе"
               value={filters.groupMode}
               onChange={(event) => onChange({ groupMode: event.target.value })}
-              disabled={isInvalid || runLoading}
+              disabled={isInvalid || runLoading || controlsLocked}
             >
               {GROUP_ANALYSIS_MODES.map((mode) => (
                 <option key={mode.id} value={mode.id}>
