@@ -53,6 +53,23 @@ describe('AnalysisPage smoke', () => {
     expect(runButton).toBeDisabled()
   })
 
+
+
+  it('syncs Вид select with workspace tabs', () => {
+    renderPage()
+
+    const viewSelect = screen.getByLabelText('Вид')
+    expect(viewSelect).toHaveValue('table')
+
+    fireEvent.click(screen.getByRole('tab', { name: 'График' }))
+    expect(viewSelect).toHaveValue('chart')
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Карта' }))
+    expect(viewSelect).toHaveValue('map')
+
+    fireEvent.change(viewSelect, { target: { value: 'table' } })
+    expect(screen.getByRole('tab', { name: 'Таблица' })).toHaveAttribute('aria-selected', 'true')
+  })
   it('sends changed parameters to POST /analysis/run', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true })
     vi.stubGlobal('fetch', fetchMock)

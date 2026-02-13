@@ -249,3 +249,85 @@ mark {
   font-size: 14px;
   color: #344054;
 }
+
+.workspace-headline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.workspace-view-switcher {
+  display: inline-flex;
+  border: 1px solid #cfdaee;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.view-tab {
+  background: #fff;
+  color: #344054;
+  border-radius: 0;
+  border-right: 1px solid #cfdaee;
+}
+
+.view-tab:last-child {
+  border-right: 0;
+}
+
+.view-tab.active {
+  background: #2554cc;
+  color: #fff;
+}
+
+.sort-btn {
+  background: transparent;
+  color: #23304a;
+  padding: 0;
+}
+
+.table-pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.treemap {
+  display: flex;
+  min-height: 180px;
+  border: 1px solid #d4def0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.treemap-node {
+  background: #e7efff;
+  color: #163679;
+  border-radius: 0;
+  border-right: 1px solid #cdd9f3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  min-width: 80px;
+}
+
+.treemap-node:last-child {
+  border-right: 0;
+}
+
+.map-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-tooltip {
+  margin-top: 8px;
+  border: 1px solid #cfdaee;
+  border-radius: 8px;
+  padding: 8px;
+  background: #f8faff;
+}

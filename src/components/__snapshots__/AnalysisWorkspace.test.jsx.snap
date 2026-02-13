@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`AnalysisWorkspace scatter > matches visual snapshot of scatter chart 1`] = `
+exports[`AnalysisWorkspace views > matches visual snapshot of scatter chart 1`] = `
 <div
   class="scatter-wrap"
 >
