@@ -52,10 +52,26 @@
           <p class="bootstrap-home__description">
             Базовая страница загружена в статическом режиме. Если SPA не инициализировалась, откройте анализ по ссылке ниже.
           </p>
-          <a class="bootstrap-home__link" href="%BASE_URL%analysis/abc-xyz">Перейти к демонстрационному анализу ABC/XYZ</a>
+          <a class="bootstrap-home__link" data-bootstrap-analysis-link href="/analysis/abc-xyz">Перейти к демонстрационному анализу ABC/XYZ</a>
         </section>
       </main>
     </div>
+    <script>
+      const fallbackBaseUrl = '%BASE_URL%'
+      const resolveBootstrapBaseUrl = () => {
+        if (fallbackBaseUrl.includes('%BASE_URL%')) {
+          const firstSegment = window.location.pathname.split('/').filter(Boolean)[0]
+          return firstSegment ? `/${firstSegment}/` : '/'
+        }
+
+        return fallbackBaseUrl.endsWith('/') ? fallbackBaseUrl : `${fallbackBaseUrl}/`
+      }
+
+      const analysisLink = document.querySelector('[data-bootstrap-analysis-link]')
+      if (analysisLink) {
+        analysisLink.setAttribute('href', `${resolveBootstrapBaseUrl()}analysis/abc-xyz`)
+      }
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
