@@ -70,3 +70,76 @@ button {
     background-position: 0 0;
   }
 }
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.field-label select,
+.field-label input {
+  border: 1px solid #cfdaee;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.product-tree {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.product-tree ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0;
+}
+
+.toggle-btn,
+.node-btn {
+  border: 0;
+  background: transparent;
+  color: #23304a;
+  padding: 4px 6px;
+  border-radius: 6px;
+  text-align: left;
+}
+
+.toggle-btn {
+  color: #6b7b98;
+}
+
+.node-btn.selected {
+  background: #e7efff;
+  color: #163679;
+}
+
+.node-btn:disabled {
+  color: #7e8aa0;
+}
+
+.toggle-placeholder {
+  display: inline-block;
+  width: 24px;
+}
+
+.node-meta {
+  color: #7d88a1;
+  font-size: 12px;
+}
+
+mark {
+  background: #ffe58f;
+  border-radius: 3px;
+}
