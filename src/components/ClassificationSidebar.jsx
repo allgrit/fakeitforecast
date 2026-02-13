@@ -23,7 +23,7 @@ function HighlightedText({ text, query }) {
   )
 }
 
-function TreeNode({ node, depth, expandedIds, onToggle, selectedNodeId, onSelect, searchQuery }) {
+function TreeNode({ node, depth, expandedIds, onToggle, selectedNodeId, onSelect, searchQuery, controlsLocked }) {
   const hasChildren = node.children?.length > 0
   const expanded = expandedIds.has(node.id)
   const selectable = isSelectableNode(node)
@@ -37,6 +37,7 @@ function TreeNode({ node, depth, expandedIds, onToggle, selectedNodeId, onSelect
             className="toggle-btn"
             onClick={() => onToggle(node.id)}
             aria-label={expanded ? `Свернуть ${node.name}` : `Раскрыть ${node.name}`}
+            disabled={controlsLocked}
           >
             {expanded ? '▾' : '▸'}
           </button>
@@ -48,7 +49,7 @@ function TreeNode({ node, depth, expandedIds, onToggle, selectedNodeId, onSelect
           type="button"
           className={`node-btn ${selectedNodeId === node.id ? 'selected' : ''}`}
           onClick={() => selectable && onSelect(node)}
-          disabled={!selectable}
+          disabled={!selectable || controlsLocked}
           aria-selected={selectedNodeId === node.id}
         >
           <HighlightedText text={node.name} query={searchQuery} />
@@ -68,6 +69,7 @@ function TreeNode({ node, depth, expandedIds, onToggle, selectedNodeId, onSelect
               selectedNodeId={selectedNodeId}
               onSelect={onSelect}
               searchQuery={searchQuery}
+              controlsLocked={controlsLocked}
             />
           ))}
         </ul>
@@ -76,7 +78,7 @@ function TreeNode({ node, depth, expandedIds, onToggle, selectedNodeId, onSelect
   )
 }
 
-export function ClassificationSidebar({ loading, data, filters, onChange }) {
+export function ClassificationSidebar({ loading, data, filters, onChange, controlsLocked }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedIds, setExpandedIds] = useState(() => new Set(['all-items']))
 
@@ -120,7 +122,7 @@ export function ClassificationSidebar({ loading, data, filters, onChange }) {
 
       <label className="field-label">
         Вид классификации
-        <select value={filters.classificationKind} onChange={(event) => onChange({ classificationKind: event.target.value })}>
+        <select value={filters.classificationKind} onChange={(event) => onChange({ classificationKind: event.target.value })} disabled={controlsLocked}>
           <option value="">Не выбрано</option>
           {classificationKinds.map((item) => (
             <option key={item.id} value={item.id}>
@@ -132,7 +134,7 @@ export function ClassificationSidebar({ loading, data, filters, onChange }) {
 
       <label className="field-label">
         Склады
-        <select value={filters.warehouseId} onChange={(event) => onChange({ warehouseId: event.target.value })}>
+        <select value={filters.warehouseId} onChange={(event) => onChange({ warehouseId: event.target.value })} disabled={controlsLocked}>
           <option value="">Все склады</option>
           {warehouses.map((item) => (
             <option key={item.id} value={item.id}>
@@ -149,6 +151,7 @@ export function ClassificationSidebar({ loading, data, filters, onChange }) {
           placeholder="Найти группу или товар"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
+          disabled={controlsLocked}
         />
       </label>
 
@@ -167,6 +170,7 @@ export function ClassificationSidebar({ loading, data, filters, onChange }) {
                 setExpandedIds((prev) => new Set(prev).add(selectedNode.id))
               }}
               searchQuery={searchQuery}
+              controlsLocked={controlsLocked}
             />
           ))}
         </ul>

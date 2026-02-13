@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { AnalysisToolbar } from '../components/AnalysisToolbar'
 import { AnalysisWorkspace } from '../components/AnalysisWorkspace'
@@ -9,7 +9,6 @@ import { ServiceLevelModal } from '../components/ServiceLevelModal'
 import { AnalysisParametersModal } from '../components/AnalysisParametersModal'
 
 const FEATURE_USE_MOCKS = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false'
-const FEATURE_LOADING = import.meta.env.VITE_SHOW_ANALYSIS_LOADING === 'true'
 
 const TELEMETRY_ENDPOINT = '/telemetry'
 
@@ -95,7 +94,9 @@ function trackTelemetry(eventName, payload) {
 export function AnalysisPage() {
   const { analysisId } = useParams()
   const [filters, setFilters] = useState(initialFilters)
+  const [analysisData, setAnalysisData] = useState(null)
   const [runLoading, setRunLoading] = useState(false)
+  const [resultLoading, setResultLoading] = useState(false)
   const [applyLoading, setApplyLoading] = useState(false)
   const [saveLoading, setSaveLoading] = useState(false)
   const [scopeType, setScopeType] = useState('groups')
@@ -109,14 +110,40 @@ export function AnalysisPage() {
   const [draftSelectedScopeIds, setDraftSelectedScopeIds] = useState([])
   const [draftServiceLevels, setDraftServiceLevels] = useState(initialServiceLevels)
   const [draftFilters, setDraftFilters] = useState(initialFilters)
+  const [runState, setRunState] = useState({ status: 'idle', message: '' })
 
-  const analysisData = useMemo(() => {
-    if (!FEATURE_USE_MOCKS || !analysisId) {
-      return null
+  const loadAnalysisResult = useCallback(async () => {
+    if (!analysisId) {
+      setAnalysisData(null)
+      return
     }
 
-    return mockAnalysisData[analysisId] || null
+    setResultLoading(true)
+
+    if (FEATURE_USE_MOCKS) {
+      setAnalysisData(mockAnalysisData[analysisId] || null)
+      setResultLoading(false)
+      return
+    }
+
+    try {
+      const response = await fetch(`/analysis/result?analysisId=${encodeURIComponent(analysisId)}`)
+      if (!response.ok) {
+        throw new Error(await parseApiError(response))
+      }
+
+      const payload = await response.json()
+      setAnalysisData(payload)
+    } catch (error) {
+      setFeedback({ type: 'error', message: error.message })
+    } finally {
+      setResultLoading(false)
+    }
   }, [analysisId])
+
+  useEffect(() => {
+    loadAnalysisResult()
+  }, [loadAnalysisResult])
 
   const updateFilters = (patch) => {
     setFilters((prev) => ({ ...prev, ...patch }))
@@ -133,6 +160,7 @@ export function AnalysisPage() {
 
   const showSuccess = (message) => setFeedback({ type: 'success', message })
   const showError = (message) => setFeedback({ type: 'error', message })
+  const controlsLocked = runLoading || resultLoading
 
   const applyServiceLevels = async (applyToAll, draftState) => {
     const nextScopeType = draftState.scopeType
@@ -205,13 +233,17 @@ export function AnalysisPage() {
     }
 
     setRunLoading(true)
+    setRunState({ status: 'running', message: '' })
     setFeedback(null)
     try {
       await postJson('/analysis/run', payload)
+      await loadAnalysisResult()
       trackTelemetry('analysis_run_started', { analysisId, groupMode })
       showSuccess('Анализ запущен.')
+      setRunState({ status: 'success', message: '' })
     } catch (error) {
       showError(error.message)
+      setRunState({ status: 'error', message: error.message })
     } finally {
       setRunLoading(false)
     }
@@ -274,10 +306,21 @@ export function AnalysisPage() {
   return (
     <div className="analysis-page" data-testid="analysis-page">
       {feedback ? <div className={`api-feedback ${feedback.type}`}>{feedback.message}</div> : null}
+      {runState.status === 'running' ? (
+        <div className="api-feedback" role="status">Запуск анализа...</div>
+      ) : null}
+      {runState.status === 'error' ? (
+        <div className="api-feedback error" role="alert">
+          <span>{runState.message}</span>
+          <button type="button" className="secondary-btn" onClick={() => runAnalysis(filters.groupMode)}>
+            Повторить запуск
+          </button>
+        </div>
+      ) : null}
       <AnalysisToolbar
         key={`toolbar-${resetKey}`}
         analysisId={analysisId}
-        loading={FEATURE_LOADING}
+        loading={resultLoading}
         data={analysisData}
         filters={filters}
         onChange={updateFilters}
@@ -288,14 +331,16 @@ export function AnalysisPage() {
         onOpenAnalysisParametersModal={openAnalysisParametersModal}
         runLoading={runLoading}
         saveLoading={saveLoading}
+        controlsLocked={controlsLocked}
       />
       <div className="analysis-body">
         <ClassificationSidebar
           key={`sidebar-${resetKey}`}
-          loading={FEATURE_LOADING}
+          loading={resultLoading}
           data={analysisData}
           filters={filters}
           onChange={updateFilters}
+          controlsLocked={controlsLocked}
         />
         <div className="analysis-content">
           <ServiceLevelModal
@@ -329,7 +374,7 @@ export function AnalysisPage() {
           />
           <AnalysisWorkspace
             key={`workspace-${resetKey}`}
-            loading={FEATURE_LOADING}
+            loading={resultLoading || runLoading}
             data={analysisData}
             thresholds={filters.thresholds}
             viewType={filters.viewType}

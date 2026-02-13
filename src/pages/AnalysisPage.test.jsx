@@ -2,7 +2,19 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AnalysisPage } from './AnalysisPage'
-import { analysisDatasetRegistry } from '../data/datasets'
+import { analysisDatasetMap, analysisDatasetRegistry } from '../data/datasets'
+import { mockAnalysisData } from '../data/mockAnalysisData'
+
+function deferred() {
+  let resolve
+  let reject
+  const promise = new Promise((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+
+  return { promise, resolve, reject }
+}
 
 function renderPage(analysisId = 'abc-xyz') {
   render(
@@ -381,4 +393,107 @@ describe('AnalysisPage smoke', () => {
     expect(screen.getByLabelText('Уровень сервиса AA')).toHaveValue(95)
     expect(screen.getByLabelText('Поиск')).toHaveValue('')
   })
+  it('locks critical controls and shows loading indicator while run is pending', async () => {
+    const runRequest = deferred()
+    const fetchMock = vi.fn((url) => {
+      if (url === '/analysis/run') {
+        return runRequest.promise
+      }
+
+      return Promise.resolve({ ok: true, json: vi.fn().mockResolvedValue({}) })
+    })
+
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
+    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
+    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Запуск анализа...')
+    expect(screen.getByLabelText('От')).toBeDisabled()
+    expect(screen.getByLabelText('До')).toBeDisabled()
+    expect(screen.getByLabelText('Шаг (дням)')).toBeDisabled()
+    expect(screen.getByLabelText('Режим анализа по группе')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Параметры анализа' })).toBeDisabled()
+    expect(screen.getByLabelText('Поиск')).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Все товары' })).toBeDisabled()
+
+    runRequest.resolve({ ok: true })
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
+  })
+
+  it('shows stable error state with retry and keeps filters after run failure', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 422,
+        json: vi.fn().mockResolvedValue({ message: 'Ошибка запуска' })
+      })
+      .mockResolvedValueOnce({ ok: true })
+      .mockResolvedValueOnce({ ok: true, json: vi.fn().mockResolvedValue(analysisDatasetMap['abc-xyz']) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderPage()
+
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
+    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
+    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ошибка запуска')
+    expect(screen.getByRole('button', { name: 'Повторить запуск' })).toBeEnabled()
+    expect(screen.getAllByLabelText('Склады')[0]).toHaveValue('msk')
+    expect(screen.getByLabelText('От')).toHaveValue('2025-01-01')
+    expect(screen.getByLabelText('До')).toHaveValue('2025-01-15')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Повторить запуск' }))
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/run')).toHaveLength(2))
+  })
+
+  it('refreshes workspace data after successful run without page reload', async () => {
+    const initialDataset = mockAnalysisData['abc-xyz']
+    mockAnalysisData['abc-xyz'] = {
+      ...initialDataset,
+      results: [{ sku: 'OLD-SKU-1', abc: 'A', xyz: 'X', x: 90, y: 80, group: 'G1', volume: 5, warehouse: 'msk' }]
+    }
+
+    const fetchMock = vi.fn((url) => {
+      if (url === '/analysis/run') {
+        mockAnalysisData['abc-xyz'] = {
+          ...initialDataset,
+          results: [{ sku: 'NEW-SKU-1', abc: 'A', xyz: 'X', x: 90, y: 80, group: 'G1', volume: 5, warehouse: 'msk' }]
+        }
+        return Promise.resolve({ ok: true })
+      }
+
+      return Promise.resolve({ ok: true })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderPage()
+
+    await screen.findByText('OLD-SKU-1')
+
+    fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
+    fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
+    fireEvent.change(screen.getAllByLabelText('Склады')[0], { target: { value: 'msk' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Все товары' }))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Провести анализ по группе' }))
+
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/run')).toHaveLength(1))
+    expect(screen.getByText('NEW-SKU-1')).toBeInTheDocument()
+    expect(screen.queryByText('OLD-SKU-1')).not.toBeInTheDocument()
+
+    mockAnalysisData['abc-xyz'] = initialDataset
+  })
+
 })
