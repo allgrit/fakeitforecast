@@ -28,6 +28,7 @@ export function AnalysisToolbar({
   onRunAnalysis,
   onSaveAnalysis,
   onResetFilters,
+  onOpenServiceLevelModal,
   runLoading,
   saveLoading
 }) {
@@ -236,6 +237,9 @@ export function AnalysisToolbar({
           </button>
           <button type="button" className="secondary-btn" onClick={onResetFilters}>
             Убрать все фильтры
+          </button>
+          <button type="button" className="secondary-btn" onClick={onOpenServiceLevelModal}>
+            Уровни сервиса
           </button>
           <label className="field-label">
             <span className="visually-hidden">Режим анализа</span>

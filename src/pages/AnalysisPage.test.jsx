@@ -33,8 +33,8 @@ describe('AnalysisPage smoke', () => {
     expect(screen.getAllByLabelText('Склады')[0]).toBeInTheDocument()
     expect(screen.getByText('Все товары')).toBeInTheDocument()
     expect(screen.getByText('Результаты ABC-XYZ')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Уровень сервиса 1 года' })).toBeInTheDocument()
-    expect(screen.getAllByLabelText(/Уровень сервиса/)).toHaveLength(9)
+    expect(screen.queryByRole('heading', { name: 'Уровень сервиса 1 года' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Уровень сервиса AA')).not.toBeInTheDocument()
   })
 
   it('disables run button when thresholds are invalid', () => {
@@ -214,6 +214,7 @@ describe('AnalysisPage smoke', () => {
 
     renderPage()
 
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
     fireEvent.click(screen.getByRole('button', { name: 'Применить для всех' }))
 
     await waitFor(() => {
@@ -225,6 +226,8 @@ describe('AnalysisPage smoke', () => {
 
   it('validates service level inputs and disables apply buttons when invalid', () => {
     renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
 
     const applyAllButton = screen.getByRole('button', { name: 'Применить для всех' })
     const applyScopeButton = screen.getByRole('button', { name: 'Применить по выбранному scope' })
@@ -244,6 +247,7 @@ describe('AnalysisPage smoke', () => {
     vi.stubGlobal('fetch', fetchMock)
     renderPage()
 
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
     fireEvent.click(screen.getByRole('button', { name: 'Применить для всех' }))
 
     await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/service-level/apply')).toHaveLength(1))
@@ -253,6 +257,7 @@ describe('AnalysisPage smoke', () => {
       expect.objectContaining({ method: 'POST' })
     )
 
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
     fireEvent.click(screen.getByRole('radio', { name: 'Склады' }))
     const scopeSelect = screen.getByLabelText('Выбранный scope')
     Array.from(scopeSelect.options).forEach((option) => {
@@ -275,6 +280,37 @@ describe('AnalysisPage smoke', () => {
     expect(scopedPayload.cells.find((cell) => cell.combo === 'AA')).toEqual({ combo: 'AA', serviceLevel: 88 })
   })
 
+
+  it('does not send request when modal changes are cancelled', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
+    fireEvent.change(screen.getByLabelText('Уровень сервиса AA'), { target: { value: '77' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Отмена' }))
+
+    expect(screen.queryByRole('dialog', { name: 'Настройка уровней сервиса' })).not.toBeInTheDocument()
+    expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/service-level/apply')).toHaveLength(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
+    expect(screen.getByLabelText('Уровень сервиса AA')).toHaveValue(95)
+  })
+
+  it('discards draft changes on Escape close', () => {
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
+    fireEvent.change(screen.getByLabelText('Уровень сервиса AA'), { target: { value: '81' } })
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+
+    expect(screen.queryByRole('dialog', { name: 'Настройка уровней сервиса' })).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
+    expect(screen.getByLabelText('Уровень сервиса AA')).toHaveValue(95)
+  })
+
   it('saves current analysis slice and resets all filters', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true })
     vi.stubGlobal('fetch', fetchMock)
@@ -284,7 +320,10 @@ describe('AnalysisPage smoke', () => {
     fireEvent.change(screen.getByLabelText('От'), { target: { value: '2025-01-01' } })
     fireEvent.change(screen.getByLabelText('До'), { target: { value: '2025-01-15' } })
     fireEvent.click(screen.getByRole('checkbox', { name: 'не анализировать новые товары' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
     fireEvent.change(screen.getByLabelText('Уровень сервиса AA'), { target: { value: '88' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Применить для всех' }))
+    await waitFor(() => expect(fetchMock.mock.calls.filter(([url]) => url === '/analysis/service-level/apply')).toHaveLength(1))
 
     fireEvent.click(screen.getByRole('button', { name: 'Сохранить' }))
 
@@ -299,6 +338,7 @@ describe('AnalysisPage smoke', () => {
     expect(screen.getByLabelText('От')).toHaveValue('')
     expect(screen.getByLabelText('До')).toHaveValue('')
     expect(screen.getByRole('checkbox', { name: 'не анализировать новые товары' })).not.toBeChecked()
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
     expect(screen.getByLabelText('Уровень сервиса AA')).toHaveValue(95)
     expect(screen.getByLabelText('Поиск')).toHaveValue('')
   })
