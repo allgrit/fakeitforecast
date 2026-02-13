@@ -1,0 +1,53 @@
+{
+  "id": "missing-values",
+  "meta": {
+    "title": "Набор с пропущенными значениями",
+    "businessScenario": "Проверка устойчивости витрины при неполных данных после частичной загрузки из внешней системы.",
+    "size": {
+      "results": 8,
+      "warehouses": 2,
+      "nodes": 5
+    },
+    "expectedRenderingFeatures": [
+      "UI не падает при пустых group/xyz/warehouse",
+      "Фильтры и модальные окна продолжают работать",
+      "Пропуски корректно отображаются в таблице"
+    ]
+  },
+  "name": "ABC-XYZ анализ: пропуски",
+  "classificationKinds": [
+    { "id": "abcxyz", "label": "ABC/XYZ" }
+  ],
+  "warehouses": [
+    { "id": "msk", "name": "Основной склад МСК" },
+    { "id": "spb", "name": "РЦ СПБ" }
+  ],
+  "productTree": [
+    {
+      "id": "grp-dairy",
+      "name": "Молочная продукция",
+      "type": "group",
+      "children": [
+        { "id": "sku-100", "name": "Кефир 1л", "type": "product" }
+      ]
+    },
+    {
+      "id": "grp-grocery",
+      "name": "Бакалея",
+      "type": "group",
+      "children": [
+        { "id": "sku-101", "name": "Рис длиннозерный", "type": "product" }
+      ]
+    }
+  ],
+  "results": [
+    { "sku": "SKU-100", "abc": "A", "xyz": "X", "x": 90, "y": 82, "warehouse": "MSK", "group": "Молочная продукция", "volume": 220 },
+    { "sku": "SKU-101", "abc": "B", "xyz": "", "x": 66, "y": 50, "warehouse": "SPB", "group": "Бакалея", "volume": 144 },
+    { "sku": "SKU-102", "abc": "C", "xyz": "Z", "x": 20, "y": 10, "warehouse": "", "group": "Бакалея", "volume": 41 },
+    { "sku": "SKU-103", "abc": "B", "xyz": "Y", "x": 58, "y": 60, "warehouse": "MSK", "group": "", "volume": 0 },
+    { "sku": "SKU-104", "abc": "A", "xyz": "X", "x": 84, "y": 79, "warehouse": "SPB", "group": null, "volume": 201 },
+    { "sku": "SKU-105", "abc": "", "xyz": "Y", "x": 51, "y": 53, "warehouse": "MSK", "group": "Молочная продукция", "volume": 130 },
+    { "sku": "SKU-106", "abc": "C", "xyz": null, "x": 31, "y": 23, "warehouse": "SPB", "group": "Бакалея", "volume": 88 },
+    { "sku": "SKU-107", "abc": "B", "xyz": "X", "x": 60, "y": 73, "warehouse": "MSK", "group": "Молочная продукция", "volume": 172 }
+  ]
+}

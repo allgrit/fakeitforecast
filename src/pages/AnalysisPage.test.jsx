@@ -2,16 +2,22 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AnalysisPage } from './AnalysisPage'
+import { analysisDatasetRegistry } from '../data/datasets'
 
-function renderPage() {
+function renderPage(analysisId = 'abc-xyz') {
   render(
-    <MemoryRouter initialEntries={['/analysis/abc-xyz']}>
+    <MemoryRouter initialEntries={[`/analysis/${analysisId}`]}>
       <Routes>
         <Route path="/analysis/:analysisId" element={<AnalysisPage />} />
       </Routes>
     </MemoryRouter>
   )
 }
+
+const smokeDatasetIds = analysisDatasetRegistry
+  .filter((dataset) => dataset.id !== 'large-tree')
+  .slice(0, 3)
+  .map((dataset) => dataset.id)
 
 describe('AnalysisPage smoke', () => {
   beforeEach(() => {
@@ -35,6 +41,14 @@ describe('AnalysisPage smoke', () => {
     expect(screen.getByText('Результаты ABC-XYZ')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Уровень сервиса 1 года' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Уровень сервиса AA')).not.toBeInTheDocument()
+  })
+
+  it.each(smokeDatasetIds)('renders shell with dataset from registry: %s', (analysisId) => {
+    renderPage(analysisId)
+
+    expect(screen.getByTestId('analysis-page')).toBeInTheDocument()
+    expect(screen.getByText(`Анализ ${analysisId}`)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Результаты ABC-XYZ' })).toBeInTheDocument()
   })
 
   it('opens and closes analysis parameters modal', () => {
