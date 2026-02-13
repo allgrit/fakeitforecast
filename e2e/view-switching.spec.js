@@ -1,4 +1,9 @@
-import { test, expect } from '@playwright/test'
+import fs from 'node:fs'
+import { test, expect, chromium } from '@playwright/test'
+
+const hasChromium = fs.existsSync(chromium.executablePath())
+
+test.skip(!hasChromium, 'Chromium browser is not installed in this environment')
 
 test('switches between Таблица, График, Карта views @smoke', async ({ page }) => {
   await page.goto('/analysis/an100005')
