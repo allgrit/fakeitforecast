@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { ClassificationSidebar } from './ClassificationSidebar'
 
 const data = {
@@ -24,15 +24,30 @@ const data = {
 
 describe('ClassificationSidebar', () => {
   it('selects a tree node', () => {
-    render(<ClassificationSidebar loading={false} data={data} />)
+    const onChange = vi.fn()
+    render(
+      <ClassificationSidebar
+        loading={false}
+        data={data}
+        filters={{ classificationKind: '', warehouseId: '', selectedNodeId: '' }}
+        onChange={onChange}
+      />
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Молочная продукция' }))
 
-    expect(screen.getByRole('button', { name: 'Молочная продукция' })).toHaveAttribute('aria-selected', 'true')
+    expect(onChange).toHaveBeenCalledWith({ selectedNodeId: 'grp-1' })
   })
 
   it('highlights search match in tree', () => {
-    render(<ClassificationSidebar loading={false} data={data} />)
+    render(
+      <ClassificationSidebar
+        loading={false}
+        data={data}
+        filters={{ classificationKind: '', warehouseId: '', selectedNodeId: '' }}
+        onChange={() => {}}
+      />
+    )
 
     fireEvent.change(screen.getByPlaceholderText('Найти группу или товар'), {
       target: { value: 'Молоч' }

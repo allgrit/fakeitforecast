@@ -76,11 +76,8 @@ function TreeNode({ node, depth, expandedIds, onToggle, selectedNodeId, onSelect
   )
 }
 
-export function ClassificationSidebar({ loading, data }) {
-  const [classificationKind, setClassificationKind] = useState('')
-  const [warehouse, setWarehouse] = useState('')
+export function ClassificationSidebar({ loading, data, filters, onChange }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedNodeId, setSelectedNodeId] = useState('all-items')
   const [expandedIds, setExpandedIds] = useState(() => new Set(['all-items']))
 
   if (loading) {
@@ -123,7 +120,7 @@ export function ClassificationSidebar({ loading, data }) {
 
       <label className="field-label">
         Вид классификации
-        <select value={classificationKind} onChange={(event) => setClassificationKind(event.target.value)}>
+        <select value={filters.classificationKind} onChange={(event) => onChange({ classificationKind: event.target.value })}>
           <option value="">Не выбрано</option>
           {classificationKinds.map((item) => (
             <option key={item.id} value={item.id}>
@@ -135,7 +132,7 @@ export function ClassificationSidebar({ loading, data }) {
 
       <label className="field-label">
         Склады
-        <select value={warehouse} onChange={(event) => setWarehouse(event.target.value)}>
+        <select value={filters.warehouseId} onChange={(event) => onChange({ warehouseId: event.target.value })}>
           <option value="">Все склады</option>
           {warehouses.map((item) => (
             <option key={item.id} value={item.id}>
@@ -164,9 +161,9 @@ export function ClassificationSidebar({ loading, data }) {
               depth={0}
               expandedIds={expandedIds}
               onToggle={toggleNode}
-              selectedNodeId={selectedNodeId}
+              selectedNodeId={filters.selectedNodeId}
               onSelect={(selectedNode) => {
-                setSelectedNodeId(selectedNode.id)
+                onChange({ selectedNodeId: selectedNode.id })
                 setExpandedIds((prev) => new Set(prev).add(selectedNode.id))
               }}
               searchQuery={searchQuery}
