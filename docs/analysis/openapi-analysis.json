@@ -1,0 +1,548 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Forecast NOW! Analysis API",
+    "version": "1.0.0",
+    "description": "Контракт API для запуска и сохранения ABC/XYZ анализа. Версионирование: URL-версия `/api/v1` + обязательный заголовок `X-API-Version: 1`. Обратная совместимость для v1 обеспечивается добавлением только необязательных полей и enum-значений; удаление/переименование полей и изменение семантики обязательных полей допускается только в v2+."
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "analysis",
+      "description": "Операции ABC/XYZ анализа"
+    }
+  ],
+  "paths": {
+    "/analysis/filters": {
+      "get": {
+        "tags": ["analysis"],
+        "summary": "Получить доступные фильтры и значения по умолчанию",
+        "operationId": "getAnalysisFilters",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XApiVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Фильтры для формы запуска анализа",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisFiltersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "422": {
+            "$ref": "#/components/responses/BusinessError"
+          }
+        }
+      }
+    },
+    "/analysis/run": {
+      "post": {
+        "tags": ["analysis"],
+        "summary": "Запустить расчет ABC/XYZ анализа",
+        "operationId": "runAnalysis",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XApiVersion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Результат запуска анализа",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisRunResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "409": {
+            "$ref": "#/components/responses/BusinessError"
+          },
+          "422": {
+            "$ref": "#/components/responses/BusinessError"
+          }
+        }
+      }
+    },
+    "/analysis/service-level/apply": {
+      "post": {
+        "tags": ["analysis"],
+        "summary": "Применить уровни сервиса к комбинациям ABC/XYZ",
+        "operationId": "applyServiceLevel",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XApiVersion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyServiceLevelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Уровни сервиса применены",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyServiceLevelResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "422": {
+            "$ref": "#/components/responses/BusinessError"
+          }
+        }
+      }
+    },
+    "/analysis/save": {
+      "post": {
+        "tags": ["analysis"],
+        "summary": "Сохранить конфигурацию анализа",
+        "operationId": "saveAnalysis",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/XApiVersion"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Конфигурация сохранена",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveAnalysisResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "422": {
+            "$ref": "#/components/responses/BusinessError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "XApiVersion": {
+        "name": "X-API-Version",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "enum": ["1"]
+        },
+        "description": "Версия контракта API. Для текущего контракта — `1`."
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Ошибка валидации запроса",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ValidationErrorResponse"
+            }
+          }
+        }
+      },
+      "BusinessError": {
+        "description": "Бизнес-ошибка при корректном формате запроса",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/BusinessErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Period": {
+        "type": "object",
+        "required": ["from", "to"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "date"
+          },
+          "to": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "Scope": {
+        "type": "object",
+        "required": ["mode"],
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["GROUP", "SUBGROUPS", "SELECTED_SUBGROUPS"],
+            "description": "Scope запуска: по группе/по подгруппам/по выбранным подгруппам"
+          },
+          "groupId": {
+            "type": "string"
+          },
+          "subgroupIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AxisConfig": {
+        "type": "object",
+        "required": ["x", "y"],
+        "properties": {
+          "x": {
+            "type": "string",
+            "description": "Параметр оси X"
+          },
+          "y": {
+            "type": "string",
+            "description": "Параметр оси Y"
+          },
+          "z": {
+            "type": "string",
+            "description": "Параметр оси Z для трехфакторного сценария"
+          }
+        }
+      },
+      "Thresholds": {
+        "type": "object",
+        "required": ["a", "b", "c"],
+        "properties": {
+          "a": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "b": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "c": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        }
+      },
+      "RunFlags": {
+        "type": "object",
+        "required": ["includeNewItems", "includePromotions", "aggregateByWarehouses", "includeDeficit"],
+        "properties": {
+          "includeNewItems": {
+            "type": "boolean",
+            "description": "Флаг: новые товары"
+          },
+          "includePromotions": {
+            "type": "boolean",
+            "description": "Флаг: акции"
+          },
+          "aggregateByWarehouses": {
+            "type": "boolean",
+            "description": "Флаг: суммарно по складам"
+          },
+          "includeDeficit": {
+            "type": "boolean",
+            "description": "Флаг: дефицит"
+          }
+        }
+      },
+      "AnalysisRunRequest": {
+        "type": "object",
+        "required": ["period", "dataMode", "viewType", "scope", "axes", "thresholds", "flags"],
+        "properties": {
+          "period": {
+            "$ref": "#/components/schemas/Period"
+          },
+          "dataMode": {
+            "type": "string",
+            "enum": ["FACT", "FORECAST", "FACT_AND_FORECAST"],
+            "description": "Факт/прогноз"
+          },
+          "viewType": {
+            "type": "string",
+            "enum": ["TABLE", "MAP", "CHART"],
+            "description": "Вид представления"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/Scope"
+          },
+          "axes": {
+            "$ref": "#/components/schemas/AxisConfig"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/Thresholds"
+          },
+          "flags": {
+            "$ref": "#/components/schemas/RunFlags"
+          }
+        }
+      },
+      "AnalysisResultItem": {
+        "type": "object",
+        "required": ["itemId", "abcClass", "xyzClass"],
+        "properties": {
+          "itemId": {
+            "type": "string"
+          },
+          "abcClass": {
+            "type": "string",
+            "enum": ["A", "B", "C"]
+          },
+          "xyzClass": {
+            "type": "string",
+            "enum": ["A", "B", "C"]
+          }
+        }
+      },
+      "AnalysisRunResponse": {
+        "type": "object",
+        "required": ["analysisId", "status", "result"],
+        "properties": {
+          "analysisId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["COMPLETED", "IN_PROGRESS"]
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnalysisResultItem"
+            }
+          }
+        }
+      },
+      "AnalysisFiltersResponse": {
+        "type": "object",
+        "required": ["availablePeriods", "defaultDataMode", "availableViewTypes", "availableAxes", "defaultThresholds", "defaultFlags"],
+        "properties": {
+          "availablePeriods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Period"
+            }
+          },
+          "defaultDataMode": {
+            "type": "string",
+            "enum": ["FACT", "FORECAST", "FACT_AND_FORECAST"]
+          },
+          "availableViewTypes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["TABLE", "MAP", "CHART"]
+            }
+          },
+          "availableAxes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "defaultThresholds": {
+            "$ref": "#/components/schemas/Thresholds"
+          },
+          "defaultFlags": {
+            "$ref": "#/components/schemas/RunFlags"
+          }
+        }
+      },
+      "ServiceLevelCell": {
+        "type": "object",
+        "required": ["combo", "serviceLevel"],
+        "properties": {
+          "combo": {
+            "type": "string",
+            "enum": ["AA", "AB", "AC", "BA", "BB", "BC", "CA", "CB", "CC"]
+          },
+          "serviceLevel": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        }
+      },
+      "ApplyServiceLevelRequest": {
+        "type": "object",
+        "required": ["analysisId", "applyToAll", "cells"],
+        "properties": {
+          "analysisId": {
+            "type": "string"
+          },
+          "applyToAll": {
+            "type": "boolean",
+            "description": "Соответствует действию 'Применить для всех'"
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceLevelCell"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "ApplyServiceLevelResponse": {
+        "type": "object",
+        "required": ["analysisId", "updated"],
+        "properties": {
+          "analysisId": {
+            "type": "string"
+          },
+          "updated": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SaveAnalysisRequest": {
+        "type": "object",
+        "required": ["analysisId", "name", "configuration"],
+        "properties": {
+          "analysisId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/AnalysisRunRequest"
+          }
+        }
+      },
+      "SaveAnalysisResponse": {
+        "type": "object",
+        "required": ["analysisId", "savedAt"],
+        "properties": {
+          "analysisId": {
+            "type": "string"
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ErrorDetail": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Машиночитаемый код ошибки"
+          },
+          "message": {
+            "type": "string",
+            "description": "Человекочитаемое сообщение"
+          },
+          "field": {
+            "type": "string",
+            "description": "JSON path поля с ошибкой валидации, например `thresholds.a`"
+          },
+          "meta": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "required": ["type", "traceId", "errors"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["VALIDATION_ERROR"]
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetail"
+            }
+          }
+        }
+      },
+      "BusinessErrorResponse": {
+        "type": "object",
+        "required": ["type", "traceId", "errors"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["BUSINESS_ERROR"]
+          },
+          "traceId": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetail"
+            }
+          }
+        }
+      }
+    }
+  }
+}
