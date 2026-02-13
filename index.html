@@ -1,12 +1,61 @@
 <!doctype html>
-<html lang="en">
+<html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FakeItForecast</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: #f5f6f8;
+        color: #1f2937;
+      }
+
+      .bootstrap-home {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+
+      .bootstrap-home__card {
+        width: min(680px, 100%);
+        background: #fff;
+        border: 1px solid #dde2ea;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+      }
+
+      .bootstrap-home__title {
+        margin: 0 0 12px;
+        font-size: 30px;
+      }
+
+      .bootstrap-home__description {
+        margin: 0 0 16px;
+        line-height: 1.5;
+      }
+
+      .bootstrap-home__link {
+        color: #2563eb;
+        font-weight: 600;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="bootstrap-home" aria-live="polite">
+        <section class="bootstrap-home__card">
+          <h1 class="bootstrap-home__title">FakeItForecast</h1>
+          <p class="bootstrap-home__description">
+            Базовая страница загружена в статическом режиме. Если SPA не инициализировалась, откройте анализ по ссылке ниже.
+          </p>
+          <a class="bootstrap-home__link" href="./#/analysis/abc-xyz">Перейти к демонстрационному анализу ABC/XYZ</a>
+        </section>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
