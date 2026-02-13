@@ -12,7 +12,18 @@ const AXIS_PARAMETER_OPTIONS = [
   { id: 'demand-variation', label: 'Вариативность спроса' }
 ]
 
-export function AnalysisToolbar({ analysisId, loading, data, filters, onChange, onRunAnalysis, runLoading }) {
+export function AnalysisToolbar({
+  analysisId,
+  loading,
+  data,
+  filters,
+  onChange,
+  onRunAnalysis,
+  onSaveAnalysis,
+  onResetFilters,
+  runLoading,
+  saveLoading
+}) {
   if (loading) {
     return <div className="skeleton toolbar-skeleton" data-testid="toolbar-skeleton" />
   }
@@ -183,6 +194,12 @@ export function AnalysisToolbar({ analysisId, loading, data, filters, onChange, 
         <div className="run-actions">
           <button type="button" disabled={isInvalid || runLoading} onClick={() => onRunAnalysis(filters.groupMode)}>
             Провести анализ по группе
+          </button>
+          <button type="button" disabled={saveLoading} onClick={onSaveAnalysis}>
+            Сохранить
+          </button>
+          <button type="button" className="secondary-btn" onClick={onResetFilters}>
+            Убрать все фильтры
           </button>
           <label className="field-label">
             <span className="visually-hidden">Режим анализа</span>
