@@ -1,5 +1,81 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`AnalysisWorkspace views > matches visual snapshot of map view 1`] = `
+<div
+  aria-label="Treemap по складам и группам"
+  class="treemap"
+>
+  <button
+    class="treemap-node"
+    style="width: 64.70588235294117%;"
+    type="button"
+  >
+    <span>
+      MSK
+    </span>
+    <strong>
+      220
+    </strong>
+  </button>
+  <button
+    class="treemap-node"
+    style="width: 35.294117647058826%;"
+    type="button"
+  >
+    <span>
+      SPB
+    </span>
+    <strong>
+      120
+    </strong>
+  </button>
+</div>
+`;
+
+exports[`AnalysisWorkspace views > matches visual snapshot of modal layers (chart + map tooltips) > chart-tooltip-layer 1`] = `
+<div
+  class="chart-tooltip"
+  role="status"
+>
+  <strong>
+    SKU-001
+  </strong>
+  <div>
+    X: 
+    90
+  </div>
+  <div>
+    Y: 
+    82
+  </div>
+  <div>
+    Группа: 
+    AX
+  </div>
+</div>
+`;
+
+exports[`AnalysisWorkspace views > matches visual snapshot of modal layers (chart + map tooltips) > map-tooltip-layer 1`] = `
+<div
+  class="map-tooltip"
+  role="status"
+>
+  <div>
+    MSK
+  </div>
+  <div>
+    Объем: 
+    220
+  </div>
+  <div>
+    Доля:
+     
+    64.7
+    %
+  </div>
+</div>
+`;
+
 exports[`AnalysisWorkspace views > matches visual snapshot of scatter chart 1`] = `
 <div
   class="scatter-wrap"

@@ -75,4 +75,46 @@ describe('AnalysisWorkspace views', () => {
 
     expect(container.querySelector('.scatter-wrap')).toMatchSnapshot()
   })
+
+  it('matches visual snapshot of map view', () => {
+    const { container } = render(
+      <AnalysisWorkspace
+        loading={false}
+        data={data}
+        thresholds={{ a: 75, b: 45, c: 15 }}
+        viewType="map"
+        onViewChange={vi.fn()}
+      />
+    )
+
+    expect(container.querySelector('.treemap')).toMatchSnapshot()
+  })
+
+  it('matches visual snapshot of modal layers (chart + map tooltips)', () => {
+    const chart = render(
+      <AnalysisWorkspace
+        loading={false}
+        data={data}
+        thresholds={{ a: 75, b: 45, c: 15 }}
+        viewType="chart"
+        onViewChange={vi.fn()}
+      />
+    )
+    fireEvent.mouseEnter(screen.getByTestId('scatter-point-SKU-001-0'))
+    expect(chart.container.querySelector('.chart-tooltip')).toMatchSnapshot('chart-tooltip-layer')
+
+    chart.unmount()
+
+    const map = render(
+      <AnalysisWorkspace
+        loading={false}
+        data={data}
+        thresholds={{ a: 75, b: 45, c: 15 }}
+        viewType="map"
+        onViewChange={vi.fn()}
+      />
+    )
+    fireEvent.mouseEnter(screen.getByRole('button', { name: 'MSK 220' }))
+    expect(map.container.querySelector('.map-tooltip')).toMatchSnapshot('map-tooltip-layer')
+  })
 })
