@@ -192,3 +192,60 @@ mark {
   color: #c62424;
   font-size: 12px;
 }
+
+.scatter-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.scatter-wrap {
+  position: relative;
+}
+
+.scatter-wrap svg {
+  width: 100%;
+  max-width: 560px;
+  border: 1px solid #d4def0;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.scatter-point {
+  cursor: pointer;
+  outline: none;
+}
+
+.scatter-point:focus-visible circle,
+.scatter-point:focus-visible rect,
+.scatter-point:focus-visible polygon {
+  stroke: #111927;
+  stroke-width: 2;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(17, 25, 39, 0.9);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.combination-legend {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #344054;
+}

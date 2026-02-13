@@ -41,8 +41,10 @@ export const mockAnalysisData = {
       }
     ],
     results: [
-      { sku: 'SKU-001', abc: 'A', xyz: 'X' },
-      { sku: 'SKU-014', abc: 'B', xyz: 'Y' }
+      { sku: 'SKU-001', abc: 'A', xyz: 'X', x: 86, y: 83 },
+      { sku: 'SKU-002', abc: 'A', xyz: 'Z', x: 79, y: 24 },
+      { sku: 'SKU-014', abc: 'B', xyz: 'Y', x: 58, y: 55 },
+      { sku: 'SKU-099', abc: 'C', xyz: 'X', x: 28, y: 77 }
     ]
   }
 }
