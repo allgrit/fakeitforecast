@@ -1,4 +1,7 @@
 export const THRESHOLD_RANGE = { min: 0, max: 100 }
+export const SERVICE_LEVEL_RANGE = { min: 0, max: 100 }
+
+export const SERVICE_LEVEL_COMBINATIONS = ['AA', 'AB', 'AC', 'BA', 'BB', 'BC', 'CA', 'CB', 'CC']
 
 export function validateThresholds(thresholds) {
   const parsed = {
@@ -36,4 +39,32 @@ export function validateThresholds(thresholds) {
   }
 
   return { isValid: true, fieldErrors: {} }
+}
+
+export function validateServiceLevels(cells) {
+  const fieldErrors = {}
+
+  for (const combination of SERVICE_LEVEL_COMBINATIONS) {
+    const rawValue = cells?.[combination]
+
+    if (rawValue === '' || rawValue === null || rawValue === undefined) {
+      fieldErrors[combination] = 'Поле обязательно'
+      continue
+    }
+
+    const parsedValue = Number(rawValue)
+    if (!Number.isFinite(parsedValue)) {
+      fieldErrors[combination] = 'Введите число'
+      continue
+    }
+
+    if (parsedValue < SERVICE_LEVEL_RANGE.min || parsedValue > SERVICE_LEVEL_RANGE.max) {
+      fieldErrors[combination] = `Допустимый диапазон ${SERVICE_LEVEL_RANGE.min}–${SERVICE_LEVEL_RANGE.max}`
+    }
+  }
+
+  return {
+    isValid: Object.keys(fieldErrors).length === 0,
+    fieldErrors
+  }
 }
