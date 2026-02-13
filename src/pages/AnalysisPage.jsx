@@ -5,7 +5,7 @@ import { AnalysisWorkspace } from '../components/AnalysisWorkspace'
 import { ClassificationSidebar } from '../components/ClassificationSidebar'
 import { mockAnalysisData } from '../data/mockAnalysisData'
 import { SERVICE_LEVEL_COMBINATIONS } from '../utils/analysisValidation'
-import { ServiceLevelMatrix } from '../components/ServiceLevelMatrix'
+import { ServiceLevelModal } from '../components/ServiceLevelModal'
 
 const FEATURE_USE_MOCKS = import.meta.env.VITE_USE_MOCK_ANALYSIS !== 'false'
 const FEATURE_LOADING = import.meta.env.VITE_SHOW_ANALYSIS_LOADING === 'true'
@@ -102,6 +102,10 @@ export function AnalysisPage() {
   const [serviceLevels, setServiceLevels] = useState(initialServiceLevels)
   const [feedback, setFeedback] = useState(null)
   const [resetKey, setResetKey] = useState(0)
+  const [serviceLevelModalOpen, setServiceLevelModalOpen] = useState(false)
+  const [draftScopeType, setDraftScopeType] = useState('groups')
+  const [draftSelectedScopeIds, setDraftSelectedScopeIds] = useState([])
+  const [draftServiceLevels, setDraftServiceLevels] = useState(initialServiceLevels)
 
   const analysisData = useMemo(() => {
     if (!FEATURE_USE_MOCKS || !analysisId) {
@@ -116,30 +120,34 @@ export function AnalysisPage() {
   }
 
   const scopeOptions = useMemo(() => {
-    if (scopeType === 'warehouses') {
+    if (draftScopeType === 'warehouses') {
       return (analysisData?.warehouses ?? []).map((warehouse) => ({ id: warehouse.id, label: warehouse.name }))
     }
 
     const uniqueGroups = [...new Set((analysisData?.results ?? []).map((row) => row.group).filter(Boolean))]
     return uniqueGroups.map((group) => ({ id: group, label: group }))
-  }, [analysisData, scopeType])
+  }, [analysisData, draftScopeType])
 
   const showSuccess = (message) => setFeedback({ type: 'success', message })
   const showError = (message) => setFeedback({ type: 'error', message })
 
-  const applyServiceLevels = async (applyToAll) => {
+  const applyServiceLevels = async (applyToAll, draftState) => {
+    const nextScopeType = draftState.scopeType
+    const nextSelectedScopeIds = draftState.selectedScopeIds
+    const nextServiceLevels = draftState.serviceLevels
+
     const payload = {
       analysisId,
       applyToAll,
       scope: applyToAll
         ? null
         : {
-            type: scopeType,
-            ids: selectedScopeIds
+            type: nextScopeType,
+            ids: nextSelectedScopeIds
           },
       cells: SERVICE_LEVEL_COMBINATIONS.map((combo) => ({
         combo,
-        serviceLevel: Number(serviceLevels[combo])
+        serviceLevel: Number(nextServiceLevels[combo])
       }))
     }
 
@@ -147,7 +155,11 @@ export function AnalysisPage() {
     setFeedback(null)
     try {
       await postJson('/analysis/service-level/apply', payload)
-      trackTelemetry('analysis_service_level_apply', { analysisId, applyToAll, scopeType })
+      trackTelemetry('analysis_service_level_apply', { analysisId, applyToAll, scopeType: nextScopeType })
+      setScopeType(nextScopeType)
+      setSelectedScopeIds(nextSelectedScopeIds)
+      setServiceLevels(nextServiceLevels)
+      setServiceLevelModalOpen(false)
       showSuccess('Уровни сервиса успешно применены.')
     } catch (error) {
       showError(error.message)
@@ -234,6 +246,13 @@ export function AnalysisPage() {
     setResetKey((prev) => prev + 1)
   }
 
+  const openServiceLevelModal = () => {
+    setDraftScopeType(scopeType)
+    setDraftSelectedScopeIds(selectedScopeIds)
+    setDraftServiceLevels(serviceLevels)
+    setServiceLevelModalOpen(true)
+  }
+
   return (
     <div className="analysis-page" data-testid="analysis-page">
       {feedback ? <div className={`api-feedback ${feedback.type}`}>{feedback.message}</div> : null}
@@ -247,6 +266,7 @@ export function AnalysisPage() {
         onRunAnalysis={runAnalysis}
         onSaveAnalysis={saveAnalysisSlice}
         onResetFilters={resetAllFilters}
+        onOpenServiceLevelModal={openServiceLevelModal}
         runLoading={runLoading}
         saveLoading={saveLoading}
       />
@@ -259,19 +279,27 @@ export function AnalysisPage() {
           onChange={updateFilters}
         />
         <div className="analysis-content">
-          <ServiceLevelMatrix
-            serviceLevels={serviceLevels}
-            onServiceLevelsChange={setServiceLevels}
-            scopeType={scopeType}
+          <ServiceLevelModal
+            isOpen={serviceLevelModalOpen}
+            onClose={() => setServiceLevelModalOpen(false)}
+            serviceLevels={draftServiceLevels}
+            onServiceLevelsChange={setDraftServiceLevels}
+            scopeType={draftScopeType}
             onScopeTypeChange={(nextType) => {
-              setScopeType(nextType)
-              setSelectedScopeIds([])
+              setDraftScopeType(nextType)
+              setDraftSelectedScopeIds([])
             }}
             scopeOptions={scopeOptions}
-            selectedScopeIds={selectedScopeIds}
-            onSelectedScopeIdsChange={setSelectedScopeIds}
+            selectedScopeIds={draftSelectedScopeIds}
+            onSelectedScopeIdsChange={setDraftSelectedScopeIds}
             applyLoading={applyLoading}
-            onApply={applyServiceLevels}
+            onApply={(applyToAll) =>
+              applyServiceLevels(applyToAll, {
+                scopeType: draftScopeType,
+                selectedScopeIds: draftSelectedScopeIds,
+                serviceLevels: draftServiceLevels
+              })
+            }
           />
           <AnalysisWorkspace
             key={`workspace-${resetKey}`}
