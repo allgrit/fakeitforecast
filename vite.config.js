@@ -1,25 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-
-function resolveBase(command) {
-  if (command !== 'build') {
-    return '/'
-  }
-
-  const repository = process.env.GITHUB_REPOSITORY || ''
-  const repoName = repository.split('/')[1]
-
-  if (!repoName) {
-    return '/'
-  }
-
-  return `/${repoName}/`
-}
+import { resolveDeployBase } from './src/config/deployBase'
 
 export default defineConfig(({ command }) => ({
   // Use an absolute subpath on GitHub Pages to avoid broken asset URLs when
   // the site is opened without a trailing slash (e.g. /repo instead of /repo/).
-  base: resolveBase(command),
+  base: resolveDeployBase({ command, githubRepository: process.env.GITHUB_REPOSITORY }),
   plugins: [react()],
   test: {
     globals: true,
