@@ -55,7 +55,10 @@ describe('AnalysisPage API contract', () => {
     const payload = JSON.parse(request.body)
 
     expect(payload).toEqual({
-      period: { from: '2025-01-01', to: '2025-01-15' },
+      warehouseId: 'msk',
+      classificationKind: '',
+      period: { from: '2025-01-01', to: '2025-01-15', stepDays: 1 },
+      analysisTypes: ['abc', 'xyz'],
       dataMode: 'FORECAST',
       viewType: 'TABLE',
       scope: {
@@ -112,6 +115,33 @@ describe('AnalysisPage API contract', () => {
     })
   })
 
+
+  it('sends selected scope in scoped service level apply payload', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    renderPage()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Уровни сервиса' }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Склады' }))
+    const scopeSelect = screen.getByLabelText('Выбранный scope')
+    Array.from(scopeSelect.options).forEach((option) => {
+      option.selected = option.value === 'msk'
+    })
+    fireEvent.change(scopeSelect)
+    fireEvent.click(screen.getByRole('button', { name: 'Применить по выбранному scope' }))
+
+    await waitFor(() => expect(getApiCalls(fetchMock, '/analysis/service-level/apply')).toHaveLength(1))
+    const [, applyRequest] = getApiCalls(fetchMock, '/analysis/service-level/apply')[0]
+    const applyPayload = JSON.parse(applyRequest.body)
+
+    expect(applyPayload).toMatchObject({
+      analysisId: 'abc-xyz',
+      applyToAll: false,
+      scopeType: 'warehouses',
+      selectedScopeIds: ['msk']
+    })
+  })
+
   it('sends applyServiceLevels and saveAnalysisSlice to /api/v1 with version header and OpenAPI-shaped payload', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true })
     vi.stubGlobal('fetch', fetchMock)
@@ -132,6 +162,8 @@ describe('AnalysisPage API contract', () => {
     const applyPayload = JSON.parse(applyRequest.body)
     expect(applyPayload.analysisId).toBe('abc-xyz')
     expect(applyPayload.applyToAll).toBe(true)
+    expect(applyPayload.scopeType).toBeUndefined()
+    expect(applyPayload.selectedScopeIds).toBeUndefined()
     expect(applyPayload.cells).toHaveLength(9)
     expect(applyPayload.cells.find((cell) => cell.combo === 'AA')).toEqual({ combo: 'AA', serviceLevel: 88 })
 
@@ -146,7 +178,10 @@ describe('AnalysisPage API contract', () => {
       analysisId: 'abc-xyz',
       name: 'analysis-abc-xyz',
       configuration: {
-        period: { from: '2025-01-01', to: '2025-01-15' },
+        warehouseId: 'msk',
+        classificationKind: '',
+        period: { from: '2025-01-01', to: '2025-01-15', stepDays: 1 },
+        analysisTypes: ['abc', 'xyz'],
         dataMode: 'FORECAST',
         viewType: 'TABLE',
         scope: {

@@ -68,13 +68,21 @@ const scopeModeMap = {
 }
 
 function buildRunConfiguration(filters, groupMode) {
+  const selectedAnalysisTypes = Object.entries(filters.analysisTypes)
+    .filter(([, isEnabled]) => isEnabled)
+    .map(([analysisType]) => analysisType)
+
   return {
+    warehouseId: filters.warehouseId,
+    classificationKind: filters.classificationKind,
     period: {
       from: filters.periodFrom,
-      to: filters.periodTo
+      to: filters.periodTo,
+      stepDays: Number(filters.stepDays) || 1
     },
     dataMode: dataModeMap[filters.dataMode] || 'FORECAST',
     viewType: viewTypeMap[filters.viewType] || 'TABLE',
+    analysisTypes: selectedAnalysisTypes,
     scope: {
       mode: scopeModeMap[groupMode] || 'GROUP',
       ...(filters.selectedNodeId ? { groupId: filters.selectedNodeId } : {}),
@@ -153,6 +161,12 @@ export function AnalysisPage() {
     const payload = {
       analysisId,
       applyToAll,
+      ...(applyToAll
+        ? {}
+        : {
+            scopeType: nextScopeType,
+            selectedScopeIds: nextSelectedScopeIds
+          }),
       cells: SERVICE_LEVEL_COMBINATIONS.map((combo) => ({
         combo,
         serviceLevel: Number(nextServiceLevels[combo])
