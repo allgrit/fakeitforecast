@@ -1,14 +1,18 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, HashRouter } from 'react-router-dom'
 import { App } from './App'
 import './styles.css'
-import { getRouterBasename } from './config/routerBase'
+import { getRouterBasename, shouldUseHashRouter } from './config/routerBase'
+
+const baseUrl = import.meta.env.BASE_URL
+const basename = getRouterBasename(baseUrl)
+const Router = shouldUseHashRouter(baseUrl) ? HashRouter : BrowserRouter
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter basename={getRouterBasename(import.meta.env.BASE_URL)}>
+    <Router basename={basename}>
       <App />
-    </BrowserRouter>
+    </Router>
   </React.StrictMode>
 )
