@@ -12,6 +12,13 @@ const AXIS_PARAMETER_OPTIONS = [
   { id: 'demand-variation', label: 'Вариативность спроса' }
 ]
 
+const ANALYSIS_TYPE_OPTIONS = [
+  { id: 'abc', label: 'ABC' },
+  { id: 'xyz', label: 'XYZ' },
+  { id: 'xyzWithoutZeros', label: 'XYZ без нулей' },
+  { id: 'fmr', label: 'FMR' }
+]
+
 export function AnalysisToolbar({
   analysisId,
   loading,
@@ -29,8 +36,15 @@ export function AnalysisToolbar({
   }
 
   const thresholdValidation = validateThresholds(filters.thresholds)
+  const selectedAnalysisTypeCount = Object.values(filters.analysisTypes).filter(Boolean).length
+  const hasAnalysisTypeError = selectedAnalysisTypeCount === 0
   const isInvalid =
-    !filters.warehouseId || !filters.periodFrom || !filters.periodTo || !filters.selectedNodeId || !thresholdValidation.isValid
+    !filters.warehouseId ||
+    !filters.periodFrom ||
+    !filters.periodTo ||
+    !filters.selectedNodeId ||
+    !thresholdValidation.isValid ||
+    hasAnalysisTypeError
 
   return (
     <header className="analysis-toolbar">
@@ -190,6 +204,28 @@ export function AnalysisToolbar({
           />
           учитывать дефицит
         </label>
+
+        <fieldset className="field-label" aria-label="Тип анализа">
+          <legend>Тип анализа</legend>
+          {ANALYSIS_TYPE_OPTIONS.map((analysisType) => (
+            <label key={analysisType.id} className="field-label inline-label">
+              <input
+                type="checkbox"
+                checked={filters.analysisTypes[analysisType.id]}
+                onChange={(event) =>
+                  onChange({
+                    analysisTypes: {
+                      ...filters.analysisTypes,
+                      [analysisType.id]: event.target.checked
+                    }
+                  })
+                }
+              />
+              {analysisType.label}
+            </label>
+          ))}
+          {hasAnalysisTypeError ? <span className="field-error">Выберите минимум один тип анализа</span> : null}
+        </fieldset>
 
         <div className="run-actions">
           <button type="button" disabled={isInvalid || runLoading} onClick={() => onRunAnalysis(filters.groupMode)}>

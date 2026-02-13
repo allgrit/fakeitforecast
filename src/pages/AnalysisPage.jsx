@@ -22,6 +22,12 @@ const initialFilters = {
   dataMode: 'forecast',
   viewType: 'table',
   groupMode: 'by-subgroups',
+  analysisTypes: {
+    abc: true,
+    xyz: true,
+    xyzWithoutZeros: false,
+    fmr: false
+  },
   axes: {
     x: 'turnover',
     y: 'sales-frequency',
@@ -151,6 +157,10 @@ export function AnalysisPage() {
   }
 
   const runAnalysis = async (groupMode) => {
+    const selectedAnalysisTypes = Object.entries(filters.analysisTypes)
+      .filter(([, isEnabled]) => isEnabled)
+      .map(([analysisType]) => analysisType)
+
     const payload = {
       analysisId,
       warehouseId: filters.warehouseId,
@@ -164,6 +174,7 @@ export function AnalysisPage() {
       dataMode: filters.dataMode,
       view: filters.viewType,
       groupAnalysisMode: groupMode,
+      analysisTypes: selectedAnalysisTypes,
       axes: filters.axes,
       thresholds: {
         a: Number(filters.thresholds.a),
